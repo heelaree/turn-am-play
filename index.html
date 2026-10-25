@@ -1,0 +1,4799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ebd2b0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta property="og:title" content="TURN AM! — Nigerian Pap (Akamu / Ogi) Mini-Game" />
+  <meta property="og:description" content="Can you turn raw akamu into a thick, glossy, lump-free bowl of hot pap? Play right on your phone!" />
+  <meta property="og:type" content="website" />
+  <title>TURN AM! — Nigerian Pap (Akamu / Ogi) Mini-Game</title>
+  <style>
+:root {
+  --bg-cream: #fdf8ee;
+  --card-cream: rgba(255, 250, 240, 0.94);
+  --ink-dark: #291d12;
+  --ink-muted: #6b533b;
+  --emerald: #0f766e;
+  --emerald-bright: #15803d;
+  --amber: #d97706;
+  --terracotta: #c2410c;
+  --danger: #dc2626;
+  --border-warm: rgba(146, 98, 52, 0.24);
+  --shadow-soft: 0 12px 32px rgba(52, 30, 10, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink-dark);
+  background: #ebd2b0;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.canvas-mount {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvas-mount:active {
+  cursor: grabbing;
+}
+
+.pap-game-canvas {
+  display: block;
+}
+
+/* HUD Layer — never blocks pointer over the bowl! */
+.hud-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.brand-group {
+  background: var(--card-cream);
+  border: 1px solid var(--border-warm);
+  border-radius: 999px;
+  padding: 7px 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(52, 30, 10, 0.1);
+}
+
+.brand-logo {
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  color: var(--terracotta);
+}
+
+.brand-sub {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.step-pills {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 250, 240, 0.86);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border-warm);
+}
+
+.step-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  transition: all 0.2s ease;
+}
+
+.step-pill.is-active {
+  background: var(--emerald);
+  color: #fff;
+}
+
+.step-pill.is-done {
+  background: rgba(21, 128, 61, 0.14);
+  color: var(--emerald-bright);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.kettle-badge {
+  background: var(--card-cream);
+  border: 1px solid var(--border-warm);
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-dark);
+  box-shadow: 0 4px 12px rgba(52, 30, 10, 0.08);
+  transition: background 0.25s, color 0.25s, transform 0.2s;
+}
+
+.kettle-badge.is-boiling {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #166534;
+  animation: gentlePulse 1.4s infinite ease-in-out;
+}
+
+.kettle-badge.is-cooling {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.icon-btn {
+  pointer-events: auto;
+  border: 1px solid var(--border-warm);
+  background: var(--card-cream);
+  color: var(--ink-dark);
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 12px rgba(52, 30, 10, 0.08);
+  transition: transform 0.12s ease, background 0.15s;
+}
+
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: #ffffff;
+    transform: translateY(-1px);
+  }
+}
+
+/* Commentary Banner */
+.commentary-banner {
+  align-self: center;
+  margin-top: 6px;
+  max-width: 660px;
+  background: var(--card-cream);
+  border: 1.5px solid var(--border-warm);
+  border-left: 5px solid var(--amber);
+  border-radius: 14px;
+  padding: 9px 16px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  box-shadow: 0 8px 20px rgba(52, 30, 10, 0.12);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.commentary-tag {
+  font-weight: 800;
+  margin-right: 6px;
+  text-transform: uppercase;
+  font-size: 0.73rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+}
+
+.commentary-banner.tone-good {
+  border-left-color: var(--emerald-bright);
+  background: rgba(240, 253, 244, 0.95);
+}
+
+.commentary-banner.tone-warn {
+  border-left-color: var(--amber);
+  background: rgba(255, 251, 235, 0.96);
+}
+
+.commentary-banner.tone-urgent {
+  border-left-color: var(--danger);
+  background: rgba(254, 242, 242, 0.96);
+  font-weight: 700;
+}
+
+/* Compact Right-Side Sensory Readout */
+.sensory-card {
+  position: absolute;
+  right: 18px;
+  top: 132px;
+  width: 222px;
+  background: rgba(255, 250, 240, 0.9);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-warm);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(52, 30, 10, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sensory-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sensory-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.scorch-label {
+  color: var(--danger);
+}
+
+.sensory-val {
+  font-size: 0.88rem;
+  color: var(--ink-dark);
+}
+
+.mini-bar-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(146, 98, 52, 0.16);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #0f766e);
+  border-radius: 999px;
+  transition: width 0.12s linear;
+}
+
+.danger-fill {
+  background: linear-gradient(90deg, #f59e0b, #dc2626);
+}
+
+.controls-hint {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(146, 98, 52, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+}
+
+/* Bottom Action Dock */
+.bottom-dock {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+.dock-action-row {
+  display: contents;
+}
+
+.pour-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #0284c7, #0369a1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 18px;
+  padding: 11px 22px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(3, 105, 161, 0.32);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.2s;
+  touch-action: none;
+}
+
+.pour-btn.mode-hot {
+  background: linear-gradient(180deg, #ea580c, #c2410c);
+  box-shadow: 0 8px 20px rgba(194, 65, 12, 0.34);
+}
+
+.pour-btn.mode-milk {
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+  box-shadow: 0 8px 20px rgba(29, 78, 216, 0.3);
+}
+
+.pour-btn.is-pressing,
+.pour-btn:active {
+  transform: scale(0.96) translateY(2px);
+  filter: brightness(1.08);
+}
+
+.pour-btn-icon {
+  font-size: 1.55rem;
+}
+
+.pour-btn-copy {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.pour-btn-copy strong {
+  font-size: 0.96rem;
+}
+
+.pour-btn-copy small {
+  font-size: 0.74rem;
+  opacity: 0.88;
+}
+
+.primary-next-btn {
+  background: linear-gradient(180deg, #15803d, #166534);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 18px;
+  padding: 14px 22px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 8px 20px rgba(22, 101, 52, 0.3);
+  transition: transform 0.12s ease, filter 0.15s;
+}
+
+@media (hover: hover) {
+  .primary-next-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+  }
+}
+
+.primary-next-btn:active {
+  transform: scale(0.97) translateY(1px);
+}
+
+.primary-next-btn.warn-cta {
+  background: linear-gradient(180deg, #d97706, #b45309);
+  box-shadow: 0 8px 20px rgba(180, 83, 9, 0.32);
+}
+
+.secondary-btn {
+  background: var(--card-cream);
+  color: var(--terracotta);
+  border: 1.5px solid var(--terracotta);
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Toppings Chip Controls */
+.toppings-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  background: var(--card-cream);
+  border: 1px solid var(--border-warm);
+  border-radius: 18px;
+  padding: 9px 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.chip-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip-group-label {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.chip-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.choice-chip {
+  border: 1px solid var(--border-warm);
+  background: #fff;
+  color: var(--ink-dark);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.14s ease;
+}
+
+.choice-chip.is-selected {
+  background: var(--terracotta);
+  color: #fff;
+  border-color: var(--terracotta);
+}
+
+/* Modals */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 21, 8, 0.56);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(14px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(14px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+  z-index: 30;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 650px;
+  max-height: 92vh;
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-cream);
+  border: 2px solid rgba(180, 120, 62, 0.35);
+  border-radius: 24px;
+  padding: 24px 28px;
+  box-shadow: 0 24px 55px rgba(24, 12, 4, 0.38);
+}
+
+.modal-eyebrow {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--emerald);
+  padding: 5px 11px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.warn-eyebrow {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--danger);
+}
+
+.modal-card h1,
+.modal-card h2 {
+  margin: 4px 0 8px;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  color: var(--ink-dark);
+}
+
+.modal-lead {
+  margin: 0 0 16px;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.rules-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.rule-item {
+  background: #fff;
+  border: 1px solid var(--border-warm);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  gap: 9px;
+}
+
+.rule-num {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--amber);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rule-item strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 3px;
+}
+
+.rule-item p {
+  margin: 0;
+  font-size: 0.77rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+}
+
+.section-label {
+  font-size: 0.88rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted) !important;
+  margin-bottom: 10px !important;
+}
+
+.variety-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.variety-card {
+  background: #fff;
+  border: 2px solid var(--border-warm);
+  border-radius: 16px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.14s ease, border-color 0.14s, box-shadow 0.14s;
+}
+
+@media (hover: hover) {
+  .variety-card:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.variety-card.is-selected {
+  border-color: var(--emerald);
+  background: #f0fdf4;
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.16);
+}
+
+.variety-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 8px;
+}
+
+.variety-copy {
+  min-width: 0;
+}
+
+.variety-card strong {
+  display: block;
+  font-size: 0.94rem;
+}
+
+.variety-card small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--terracotta);
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.variety-card p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  line-height: 1.32;
+}
+
+.hero-cta-btn {
+  width: 100%;
+  background: linear-gradient(180deg, #ea580c, #c2410c);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 15px 22px;
+  font-size: 1.04rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 10px 24px rgba(194, 65, 12, 0.3);
+  transition: transform 0.12s ease, filter 0.15s;
+}
+
+@media (hover: hover) {
+  .hero-cta-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+  }
+}
+
+.hero-cta-btn:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* Watery Crossroads Choice Cards */
+.choice-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.choice-card {
+  background: #fff;
+  border: 2px solid var(--border-warm);
+  border-radius: 18px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+}
+
+@media (hover: hover) {
+  .choice-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(45, 25, 10, 0.14);
+  }
+}
+
+.choice-card:active {
+  transform: scale(0.98);
+}
+
+.rescue-choice {
+  border-color: #ea580c;
+  background: #fff7ed;
+}
+
+.watery-choice {
+  border-color: #0284c7;
+  background: #f0f9ff;
+}
+
+.choice-emoji {
+  font-size: 2rem;
+}
+
+.choice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.choice-card strong {
+  font-size: 1.05rem;
+  color: var(--ink-dark);
+}
+
+.choice-copy span {
+  font-size: 0.83rem;
+  color: var(--ink-muted);
+  line-height: 1.38;
+}
+
+/* Results Modal */
+.score-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.result-verdict {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.93rem;
+  line-height: 1.42;
+}
+
+.score-circle {
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e, #15803d);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.28);
+}
+
+.score-circle span {
+  font-size: 1.85rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-circle small {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metric-item {
+  background: #fff;
+  border: 1px solid var(--border-warm);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.metric-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tips-box {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--border-warm);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 0.85rem;
+}
+
+.tips-box ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--ink-muted);
+}
+
+.tips-box li {
+  margin-bottom: 4px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Mobile & Compact Portrait Viewport Adjustments */
+@media (max-width: 760px) {
+  .hud-layer {
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .top-bar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .brand-group {
+    padding: 6px 11px;
+    flex-shrink: 0;
+  }
+
+  .brand-logo {
+    font-size: 0.88rem;
+  }
+
+  .brand-sub,
+  .step-pills,
+  .controls-hint {
+    display: none;
+  }
+
+  .top-actions {
+    gap: 5px;
+    margin-left: auto;
+    min-width: 0;
+  }
+
+  .kettle-badge {
+    padding: 6px 10px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .icon-btn {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .commentary-banner {
+    width: 100%;
+    max-width: 540px;
+    margin-top: 6px;
+    padding: 7px 11px;
+    font-size: 0.81rem;
+    line-height: 1.3;
+    border-radius: 12px;
+  }
+
+  .commentary-tag {
+    font-size: 0.68rem;
+    margin-right: 4px;
+  }
+
+  /* Sleek non-overlapping horizontal sensory telemetry strip */
+  .sensory-card {
+    position: static;
+    width: 100%;
+    max-width: 540px;
+    align-self: center;
+    margin-top: 6px;
+    padding: 6px 11px;
+    border-radius: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+  }
+
+  .sensory-row {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .sensory-label {
+    font-size: 0.63rem;
+    white-space: nowrap;
+  }
+
+  .sensory-val {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Ergonomic two-thumb Bottom Action Dock */
+  .bottom-dock {
+    width: 100%;
+    max-width: 540px;
+    align-self: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+  }
+
+  .toppings-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 15px;
+  }
+
+  .chip-group {
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .chip-group-label {
+    font-size: 0.68rem;
+    flex-shrink: 0;
+    min-width: 60px;
+  }
+
+  .chip-row {
+    flex: 1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    gap: 6px;
+  }
+
+  .chip-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .choice-chip {
+    flex-shrink: 0;
+    min-height: 34px;
+    padding: 6px 11px;
+    font-size: 0.77rem;
+  }
+
+  .dock-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .secondary-btn {
+    flex: 1 1 100%;
+    order: -1;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    border-radius: 14px;
+  }
+
+  .pour-btn {
+    flex: 1.25 1 0;
+    min-width: 0;
+    min-height: 58px;
+    padding: 9px 12px;
+    gap: 8px;
+    border-radius: 16px;
+    justify-content: center;
+  }
+
+  .pour-btn-icon {
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+
+  .pour-btn-copy {
+    min-width: 0;
+  }
+
+  .pour-btn-copy strong {
+    font-size: 0.84rem;
+    line-height: 1.15;
+  }
+
+  .pour-btn-copy small {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .primary-next-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 58px;
+    padding: 9px 11px;
+    font-size: 0.84rem;
+    line-height: 1.2;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Compact Mobile Modals */
+  .modal-backdrop {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .modal-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .modal-eyebrow {
+    font-size: 0.68rem;
+    padding: 4px 9px;
+    margin-bottom: 5px;
+  }
+
+  .modal-card h1,
+  .modal-card h2 {
+    font-size: 1.26rem;
+    margin: 2px 0 6px;
+  }
+
+  .modal-lead {
+    font-size: 0.85rem;
+    line-height: 1.38;
+    margin-bottom: 11px;
+  }
+
+  .rules-strip {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .rule-item {
+    padding: 8px 10px;
+    border-radius: 12px;
+    align-items: center;
+  }
+
+  .rule-item strong {
+    font-size: 0.81rem;
+    margin-bottom: 1px;
+  }
+
+  .rule-item p {
+    font-size: 0.74rem;
+    line-height: 1.3;
+  }
+
+  .section-label {
+    font-size: 0.78rem !important;
+    margin-bottom: 7px !important;
+  }
+
+  .variety-grid {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-bottom: 13px;
+  }
+
+  .variety-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 11px;
+    border-radius: 14px;
+  }
+
+  .variety-swatch {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .variety-card strong {
+    font-size: 0.88rem;
+  }
+
+  .variety-card small {
+    font-size: 0.71rem;
+    margin-bottom: 2px;
+  }
+
+  .variety-card p {
+    font-size: 0.73rem;
+    line-height: 1.28;
+  }
+
+  .choice-cards {
+    grid-template-columns: 1fr;
+    gap: 9px;
+    margin-top: 10px;
+  }
+
+  .choice-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 16px;
+  }
+
+  .choice-emoji {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+
+  .choice-card strong {
+    font-size: 0.96rem;
+  }
+
+  .choice-copy span {
+    font-size: 0.78rem;
+    line-height: 1.32;
+  }
+
+  .score-header {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .result-verdict {
+    font-size: 0.84rem;
+    line-height: 1.36;
+  }
+
+  .score-circle {
+    width: 72px;
+    height: 72px;
+  }
+
+  .score-circle span {
+    font-size: 1.55rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .metric-item {
+    padding: 8px 10px;
+  }
+
+  .metric-top {
+    font-size: 0.75rem;
+    margin-bottom: 5px;
+  }
+
+  .tips-box {
+    padding: 10px 13px;
+    margin-bottom: 13px;
+    font-size: 0.8rem;
+  }
+
+  .hero-cta-btn {
+    min-height: 50px;
+    padding: 13px 18px;
+    font-size: 0.98rem;
+  }
+}
+
+/* Short Landscape Mobile Viewports (e.g. rotated phones 667x375 - 932x430) */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud-layer {
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .brand-sub,
+  .step-pills,
+  .controls-hint {
+    display: none;
+  }
+
+  .brand-group {
+    padding: 5px 11px;
+  }
+
+  .kettle-badge,
+  .icon-btn {
+    padding: 5px 10px;
+    font-size: 0.76rem;
+  }
+
+  .commentary-banner {
+    margin-top: 4px;
+    max-width: 480px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+
+  .sensory-card {
+    position: absolute;
+    top: 52px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    width: 174px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 10px;
+    gap: 5px;
+  }
+
+  .bottom-dock {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: none;
+    gap: 8px;
+  }
+
+  .dock-action-row {
+    display: contents;
+  }
+
+  .pour-btn {
+    min-height: 44px;
+    padding: 7px 14px;
+    flex: 0 1 auto;
+  }
+
+  .primary-next-btn {
+    min-height: 44px;
+    padding: 9px 16px;
+    font-size: 0.84rem;
+    flex: 0 1 auto;
+  }
+
+  .toppings-controls {
+    flex-direction: row;
+    padding: 6px 10px;
+    gap: 6px 12px;
+    width: auto;
+  }
+
+  .modal-card {
+    padding: 14px 18px;
+  }
+}
+
+</style>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Renderer Canvas Mount (2D Canvas now; drop-in Three.js WebGL mount ready) -->
+    <div id="canvas-mount" class="canvas-mount" aria-label="Pap mixing bowl"></div>
+
+    <!-- Non-blocking HUD Overlay -->
+    <div class="hud-layer">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="brand-group">
+          <span class="brand-logo">🥣 TURN AM!</span>
+          <span class="brand-sub">Akamu • Ogi • Oka Baba</span>
+        </div>
+
+        <nav class="step-pills" aria-label="Preparation stages">
+          <span id="step-pill-1" class="step-pill">1. Cold Slurry</span>
+          <span id="step-pill-2" class="step-pill">2. Boil &amp; Turn</span>
+          <span id="step-pill-3" class="step-pill">3. Dress &amp; Serve</span>
+        </nav>
+
+        <div class="top-actions">
+          <div id="kettle-badge" class="kettle-badge">🫖 Kettle: 79°C</div>
+          <button id="btn-mute" class="icon-btn" type="button" title="Toggle Kitchen Sound">🔊</button>
+          <button id="btn-restart" class="icon-btn restart-btn" type="button" title="Start Fresh Bowl">↺ New Bowl</button>
+        </div>
+      </header>
+
+      <!-- Live Kitchen Coaching Bubble -->
+      <div id="commentary-banner" class="commentary-banner tone-neutral">
+        <span class="commentary-tag">Kitchen Sense:</span>
+        <span id="commentary-text">Add a small splash of cool water and mash all raw akamu lumps smooth!</span>
+      </div>
+
+      <!-- Compact Bowl Feel Readout -->
+      <aside id="sensory-card" class="sensory-card">
+        <div class="sensory-row">
+          <span class="sensory-label">Texture</span>
+          <strong id="readout-state" class="sensory-val">Crumbly Raw Cake</strong>
+        </div>
+        <div class="sensory-row">
+          <span class="sensory-label">Smoothness</span>
+          <strong id="readout-lumps" class="sensory-val">Lumpy (100% raw)</strong>
+        </div>
+        <div class="sensory-row">
+          <span class="sensory-label">Bowl Fill</span>
+          <div class="mini-bar-track">
+            <div id="readout-fill-bar" class="mini-bar-fill" style="width: 21%"></div>
+          </div>
+        </div>
+        <div id="scorch-row" class="sensory-row hidden">
+          <span class="sensory-label scorch-label">🔥 Scorch Risk</span>
+          <div class="mini-bar-track danger-track">
+            <div id="readout-scorch-bar" class="mini-bar-fill danger-fill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="controls-hint">
+          <span>🌀 Move/circle inside bowl to stir</span>
+          <span>␣ Hold kbd/button to pour</span>
+        </div>
+      </aside>
+
+      <!-- Bottom Interactive Action Dock -->
+      <footer id="bottom-dock" class="bottom-dock">
+        <!-- Toppings Selectors (Shown only in Phase 3: TOPPINGS) -->
+        <div id="toppings-controls" class="toppings-controls hidden">
+          <div class="chip-group">
+            <span class="chip-group-label">Sweetener:</span>
+            <div id="sweetener-chips" class="chip-row"></div>
+          </div>
+          <div class="chip-group">
+            <span class="chip-group-label">Side Dish:</span>
+            <div id="side-chips" class="chip-row"></div>
+          </div>
+        </div>
+
+        <div class="dock-action-row">
+          <!-- Phase 1 & 2 & 3 Hold-to-Pour Button -->
+          <button id="btn-pour" class="pour-btn" type="button">
+            <span id="pour-btn-icon" class="pour-btn-icon">💧</span>
+            <span class="pour-btn-copy">
+              <strong id="pour-btn-title">Hold to Pour Cool Water</strong>
+              <small id="pour-btn-sub">Hold while mashing lumps</small>
+            </span>
+          </button>
+
+          <!-- Secondary Action (e.g. Re-boil Kettle) -->
+          <button id="btn-secondary" class="secondary-btn hidden" type="button">
+            🔥 Re-Boil Kettle
+          </button>
+
+          <!-- Primary Stage Progression CTA -->
+          <button id="btn-primary-next" class="primary-next-btn" type="button">
+            🫖 Grab Kettle &amp; Turn Pap →
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- MODAL 1: Start & Variety Picker -->
+    <div id="modal-select" class="modal-backdrop">
+      <div class="modal-card start-modal">
+        <div class="modal-eyebrow">NIGERIAN BREAKFAST MINI-GAME</div>
+        <h1>Can You Turn a Smooth Bowl of Hot Pap?</h1>
+        <p class="modal-lead">
+          Turning raw fermented <strong>akamu / ogi</strong> into thick, glossy custard is all in the wrist, water ratio, and timing:
+        </p>
+
+        <div class="rules-strip">
+          <div class="rule-item">
+            <span class="rule-num">1</span>
+            <div>
+              <strong>Thick Slurry</strong>
+              <p>Add <em>just enough</em> cool water to crush every lump. Too much cool water kills the heat!</p>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-num">2</span>
+            <div>
+              <strong>100°C Boil &amp; Catch</strong>
+              <p>Wait for a rolling boil. Pour hot water steadily—don't get fooled by the 1-second lag!</p>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-num">3</span>
+            <div>
+              <strong>Whip Fast Circles</strong>
+              <p>Cut the pour right as it catches and stir briskly in circles for a velvety, lump-free shine!</p>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-label">Choose Your Raw Pap Paste:</h2>
+        <div id="variety-grid" class="variety-grid"></div>
+
+        <button id="btn-start-game" class="hero-cta-btn" type="button">
+          Drop Lump in Bowl &amp; Start →
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 2: The Iconic Watery Pap Crossroads -->
+    <div id="modal-watery" class="modal-backdrop hidden">
+      <div class="modal-card watery-modal">
+        <div class="modal-eyebrow warn-eyebrow">EISH! KITCHEN EMERGENCY 😭</div>
+        <h2>Your Pap Refused to Thicken!</h2>
+        <p id="watery-reason-text" class="modal-lead"></p>
+
+        <div class="choice-cards">
+          <button id="btn-choice-stove" class="choice-card rescue-choice" type="button">
+            <span class="choice-emoji">🔥</span>
+            <span class="choice-copy">
+              <strong>Stove Pot Rescue</strong>
+              <span>Transfer to a small aluminum pot over gas heat and stir non-stop before the bottom burns!</span>
+            </span>
+          </button>
+
+          <button id="btn-choice-drink" class="choice-card watery-choice" type="button">
+            <span class="choice-emoji">🥣</span>
+            <span class="choice-copy">
+              <strong>Enjoy Your Watery Pap</strong>
+              <span>Accept your fate with chest, add milk &amp; sugar anyway, and drink your warm corn milk!</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: Final Verdict & Score Card -->
+    <div id="modal-results" class="modal-backdrop hidden">
+      <div class="modal-card results-modal">
+        <div id="result-badge" class="modal-eyebrow">👑 100% Velvet Mastery</div>
+        <div class="score-header">
+          <div>
+            <h2 id="result-title">MAMA PUT CERTIFIED</h2>
+            <p id="result-verdict" class="result-verdict"></p>
+          </div>
+          <div class="score-circle">
+            <span id="result-score-num">98</span>
+            <small>/ 100</small>
+          </div>
+        </div>
+
+        <div id="result-metrics" class="metrics-grid"></div>
+
+        <div class="tips-box">
+          <strong>Kitchen Notes:</strong>
+          <ul id="result-tips"></ul>
+        </div>
+
+        <div class="results-actions">
+          <button id="btn-play-again" class="hero-cta-btn" type="button">
+            🥣 Turn Another Bowl
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function() {
+  'use strict';
+  const __modules = {
+  'src/main.js': function(__exports, __require) {
+const {  PAP_VARIETIES, SWEETENERS, SIDES  } = __require('src/config/papVarieties.js');
+const {  PapSimulation  } = __require('src/simulation/papSimulation.js');
+const {  evaluatePapBowl  } = __require('src/simulation/evaluator.js');
+const {  Canvas2DRenderer  } = __require('src/render/canvas2dRenderer.js');
+const {  InputController  } = __require('src/input/inputController.js');
+const {  SoundEngine  } = __require('src/audio/soundEngine.js');
+// Core Engine Instances (Renderer is swappable with a future Three.js WebGL3DRenderer!)
+const sim = new PapSimulation();
+const renderer = new Canvas2DRenderer();
+const sound = new SoundEngine();
+
+const canvasMount = document.getElementById('canvas-mount');
+renderer.init(canvasMount);
+
+const input = new InputController(canvasMount, renderer);
+input.onUserGesture = () => sound.unlock();
+
+// DOM Elements
+const els = {
+  step1: document.getElementById('step-pill-1'),
+  step2: document.getElementById('step-pill-2'),
+  step3: document.getElementById('step-pill-3'),
+  kettleBadge: document.getElementById('kettle-badge'),
+  btnMute: document.getElementById('btn-mute'),
+  btnRestart: document.getElementById('btn-restart'),
+  commentaryBanner: document.getElementById('commentary-banner'),
+  commentaryText: document.getElementById('commentary-text'),
+  sensoryCard: document.getElementById('sensory-card'),
+  readoutState: document.getElementById('readout-state'),
+  readoutLumps: document.getElementById('readout-lumps'),
+  readoutFillBar: document.getElementById('readout-fill-bar'),
+  scorchRow: document.getElementById('scorch-row'),
+  readoutScorchBar: document.getElementById('readout-scorch-bar'),
+  bottomDock: document.getElementById('bottom-dock'),
+  btnPour: document.getElementById('btn-pour'),
+  pourBtnIcon: document.getElementById('pour-btn-icon'),
+  pourBtnTitle: document.getElementById('pour-btn-title'),
+  pourBtnSub: document.getElementById('pour-btn-sub'),
+  toppingsControls: document.getElementById('toppings-controls'),
+  sweetenerChips: document.getElementById('sweetener-chips'),
+  sideChips: document.getElementById('side-chips'),
+  btnSecondary: document.getElementById('btn-secondary'),
+  btnPrimaryNext: document.getElementById('btn-primary-next'),
+  modalSelect: document.getElementById('modal-select'),
+  varietyGrid: document.getElementById('variety-grid'),
+  btnStartGame: document.getElementById('btn-start-game'),
+  modalWatery: document.getElementById('modal-watery'),
+  wateryReasonText: document.getElementById('watery-reason-text'),
+  btnChoiceStove: document.getElementById('btn-choice-stove'),
+  btnChoiceDrink: document.getElementById('btn-choice-drink'),
+  modalResults: document.getElementById('modal-results'),
+  resultBadge: document.getElementById('result-badge'),
+  resultTitle: document.getElementById('result-title'),
+  resultVerdict: document.getElementById('result-verdict'),
+  resultScoreNum: document.getElementById('result-score-num'),
+  resultMetrics: document.getElementById('result-metrics'),
+  resultTips: document.getElementById('result-tips'),
+  btnPlayAgain: document.getElementById('btn-play-again')
+};
+
+input.bindPourButton(els.btnPour);
+
+let selectedVarietyId = 'white_akamu';
+let lastPhaseRendered = null;
+
+// Build Variety Selection Cards
+function renderVarietyPicker() {
+  els.varietyGrid.innerHTML = '';
+  Object.values(PAP_VARIETIES).forEach((v) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `variety-card ${v.id === selectedVarietyId ? 'is-selected' : ''}`;
+    const [r, g, b] = v.cookedColor;
+    btn.innerHTML = `
+      <div class="variety-swatch" style="background: rgb(${r}, ${g}, ${b})"></div>
+      <div class="variety-copy">
+        <strong>${v.name}</strong>
+        <small>${v.localNames}</small>
+        <p>${v.tagline}</p>
+      </div>
+    `;
+    btn.addEventListener('click', () => {
+      selectedVarietyId = v.id;
+      sim.setVariety(v.id);
+      renderVarietyPicker();
+    });
+    els.varietyGrid.appendChild(btn);
+  });
+}
+
+// Build Sweetener & Side Chips
+function renderToppingsChips() {
+  els.sweetenerChips.innerHTML = '';
+  SWEETENERS.forEach((sw) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `choice-chip ${sim.sweetenerId === sw.id ? 'is-selected' : ''}`;
+    chip.textContent = `${sw.icon} ${sw.label}`;
+    chip.addEventListener('click', () => {
+      sound.unlock();
+      sim.setSweetener(sw.id);
+      if (sw.cubes > 0 || sw.honey) sound.playPlop();
+      renderToppingsChips();
+    });
+    els.sweetenerChips.appendChild(chip);
+  });
+
+  els.sideChips.innerHTML = '';
+  SIDES.forEach((sd) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `choice-chip ${sim.sideId === sd.id ? 'is-selected' : ''}`;
+    chip.textContent = sd.name;
+    chip.addEventListener('click', () => {
+      sound.unlock();
+      sim.setSide(sd.id);
+      sound.playPlop();
+      renderToppingsChips();
+    });
+    els.sideChips.appendChild(chip);
+  });
+}
+
+// Wire Buttons
+els.btnStartGame.addEventListener('click', () => {
+  sound.unlock();
+  sound.resetRoundFlags();
+  input.resetPour();
+  sim.startRound(selectedVarietyId);
+});
+
+els.btnRestart.addEventListener('click', () => {
+  input.resetPour();
+  sound.resetRoundFlags();
+  sim.reset('SELECT');
+});
+
+els.btnPlayAgain.addEventListener('click', () => {
+  input.resetPour();
+  sound.resetRoundFlags();
+  sim.reset('SELECT');
+});
+
+els.btnMute.addEventListener('click', () => {
+  sound.unlock();
+  const muted = sound.toggleMute();
+  els.btnMute.textContent = muted ? '🔇' : '🔊';
+});
+
+els.btnSecondary.addEventListener('click', () => {
+  sound.unlock();
+  sim.reboilKettle();
+});
+
+els.btnPrimaryNext.addEventListener('click', () => {
+  sound.unlock();
+  input.resetPour();
+
+  if (sim.phase === 'SLURRY') {
+    sim.grabKettle();
+  } else if (sim.phase === 'POUR_HOT') {
+    if (sim.hotWaterMl <= 40 && sim.gelatinization < 0.3) {
+      // Gently remind player to actually pour boiling water first!
+      const promptMsg = input.isTouchPrimary()
+        ? 'Hold the orange Pour button to add boiling water first!'
+        : 'Hold SPACEBAR (or the orange Pour button) to pour boiling water first!';
+      sim._setCommentary(promptMsg, 'warn');
+      return;
+    }
+    sim.finishTurning();
+  } else if (sim.phase === 'STOVE_RESCUE') {
+    sim.finishTurning();
+  } else if (sim.phase === 'TOPPINGS') {
+    sim.serveBowl();
+    showResultsModal(sim.getRenderSnapshot());
+  }
+});
+
+els.btnChoiceStove.addEventListener('click', () => {
+  sound.unlock();
+  input.resetPour();
+  sim.chooseStoveRescue();
+});
+
+els.btnChoiceDrink.addEventListener('click', () => {
+  sound.unlock();
+  input.resetPour();
+  sim.chooseEnjoyWateryPap();
+});
+
+function showResultsModal(snapshot) {
+  const report = evaluatePapBowl(snapshot);
+  sound.playServeChime(report.totalScore >= 72);
+
+  els.resultBadge.textContent = report.badge;
+  els.resultTitle.textContent = report.title;
+  els.resultVerdict.textContent = report.verdict;
+  els.resultScoreNum.textContent = String(report.totalScore);
+
+  els.resultMetrics.innerHTML = report.metrics
+    .map(
+      (m) => `
+      <div class="metric-item">
+        <div class="metric-top">
+          <span>${m.label}</span>
+          <span>${m.score}%</span>
+        </div>
+        <div class="mini-bar-track">
+          <div class="mini-bar-fill" style="width: ${m.score}%"></div>
+        </div>
+      </div>
+    `
+    )
+    .join('');
+
+  els.resultTips.innerHTML = report.tips.map((t) => `<li>${t}</li>`).join('');
+}
+
+function describeTextureState(s) {
+  if (s.phase === 'SLURRY') {
+    if (s.coldWaterMl < 14) return 'Dry Crumbly Cake';
+    if (s.settledFraction > 0.25) return 'Settling at Bottom!';
+    if (s.coldWaterMl < 30) return 'Stiff Oobleck Paste';
+    if (s.coldWaterMl <= 68) {
+      return s.lumpFraction < 0.05 ? 'Silky Heavy Cream ✨' : 'Hydrating Slurry';
+    }
+    return 'Very Thin Watery Mix';
+  }
+
+  if (s.gelatinization < 0.32) {
+    return s.hotWaterMl > 20 ? `Hot Milky Mix (${Math.round(s.bowlTempC)}°C)` : 'Cold Slurry Ready';
+  }
+  if (s.catchFlashTimer > 0.2) return '⚡ CATCHING NOW!!';
+  if (s.cookedThickness > 1.35) return 'Extra Thick (Agidi!)';
+  if (s.cookedThickness < 0.65) return 'Light & Runny';
+  if (s.curdiness > 0.16) return 'Thick — Patchy Curds';
+  if (s.glossiness > 0.72) return 'Velvety Mirror Gloss ✨';
+  return 'Thickened Custard';
+}
+
+function syncHud(snapshot) {
+  const { phase } = snapshot;
+
+  // Modals visibility
+  els.modalSelect.classList.toggle('hidden', phase !== 'SELECT');
+  els.modalWatery.classList.toggle('hidden', phase !== 'WATERY_CHOICE');
+  els.modalResults.classList.toggle('hidden', phase !== 'RESULTS');
+
+  if (phase === 'WATERY_CHOICE' && lastPhaseRendered !== 'WATERY_CHOICE') {
+    els.wateryReasonText.textContent = sim.wateryFailureReason;
+  }
+  if (phase === 'TOPPINGS' && lastPhaseRendered !== 'TOPPINGS') {
+    renderToppingsChips();
+  }
+
+  const inGameplay = ['SLURRY', 'POUR_HOT', 'STOVE_RESCUE', 'TOPPINGS'].includes(phase);
+  els.commentaryBanner.classList.toggle('hidden', !inGameplay);
+  els.sensoryCard.classList.toggle('hidden', !inGameplay);
+  els.bottomDock.classList.toggle('hidden', !inGameplay);
+
+  // Step Pills
+  els.step1.className = `step-pill ${phase === 'SLURRY' ? 'is-active' : phase !== 'SELECT' ? 'is-done' : ''}`;
+  const inStep2 = phase === 'POUR_HOT' || phase === 'WATERY_CHOICE' || phase === 'STOVE_RESCUE';
+  const doneStep2 = phase === 'TOPPINGS' || phase === 'RESULTS';
+  els.step2.className = `step-pill ${inStep2 ? 'is-active' : doneStep2 ? 'is-done' : ''}`;
+  els.step3.className = `step-pill ${phase === 'TOPPINGS' ? 'is-active' : phase === 'RESULTS' ? 'is-done' : ''}`;
+
+  // Kettle Badge & Compact Top Bar Copy
+  const isCompact = window.innerWidth <= 560;
+  const isTouch = input.isTouchPrimary();
+  els.btnRestart.textContent = isCompact ? '↺ New' : '↺ New Bowl';
+
+  const kTemp = Math.round(snapshot.kettleTempC);
+  if (kTemp >= 99) {
+    els.kettleBadge.textContent = isCompact ? '🔥 100°C Boil!' : '🔥 Kettle: 100°C Boiling!';
+    els.kettleBadge.className = 'kettle-badge is-boiling';
+  } else if (snapshot.kettleBurnerOn) {
+    els.kettleBadge.textContent = isCompact ? `🫖 ${kTemp}°C ↑` : `🫖 Kettle: ${kTemp}°C (Heating...)`;
+    els.kettleBadge.className = 'kettle-badge';
+  } else {
+    els.kettleBadge.textContent = isCompact ? `🫖 ${kTemp}°C` : `🫖 Kettle: ${kTemp}°C`;
+    els.kettleBadge.className = 'kettle-badge is-cooling';
+  }
+
+  if (!inGameplay) {
+    lastPhaseRendered = phase;
+    return;
+  }
+
+  // Commentary
+  els.commentaryBanner.className = `commentary-banner tone-${snapshot.commentary.tone}`;
+  els.commentaryText.textContent = snapshot.commentary.text;
+
+  // Sensory Readout
+  els.readoutState.textContent = describeTextureState(snapshot);
+  const lumpPct = Math.round(snapshot.lumpFraction * 100);
+  const curdPct = Math.round(snapshot.curdiness * 100);
+  if (lumpPct === 0 && curdPct < 6) {
+    els.readoutLumps.textContent = '100% Silky Smooth ✨';
+  } else if (snapshot.gelatinization > 0.35 && curdPct >= 6) {
+    els.readoutLumps.textContent = lumpPct > 0
+      ? `${lumpPct}% Raw Seeds • ${curdPct}% Curds`
+      : `${curdPct}% Curds (Stir Fast!)`;
+  } else {
+    els.readoutLumps.textContent = `${100 - lumpPct}% Mashed`;
+  }
+
+  els.readoutFillBar.style.width = `${Math.round(snapshot.fillFraction * 100)}%`;
+  els.scorchRow.classList.toggle('hidden', phase !== 'STOVE_RESCUE');
+  if (phase === 'STOVE_RESCUE') {
+    els.readoutScorchBar.style.width = `${Math.round(snapshot.scorchRisk * 100)}%`;
+  }
+
+  // Bottom Dock Buttons per Phase
+  els.toppingsControls.classList.toggle('hidden', phase !== 'TOPPINGS');
+  els.btnPour.classList.toggle('hidden', phase === 'STOVE_RESCUE');
+
+  if (phase === 'SLURRY') {
+    els.btnPour.className = `pour-btn ${snapshot.isPouring ? 'is-pressing' : ''}`;
+    els.pourBtnIcon.textContent = '💧';
+    els.pourBtnTitle.textContent = isCompact ? 'Hold: Cool Water' : 'Hold to Pour Cool Water';
+    els.pourBtnSub.textContent = isTouch
+      ? 'Hold & mash lumps smooth'
+      : 'Or hold SPACEBAR while mashing lumps';
+    els.btnSecondary.classList.add('hidden');
+
+    els.btnPrimaryNext.className = 'primary-next-btn';
+    if (isCompact) {
+      els.btnPrimaryNext.textContent = kTemp >= 99 ? '🫖 Boiling! Turn →' : `🫖 Kettle (${kTemp}°C) →`;
+    } else {
+      els.btnPrimaryNext.textContent = kTemp >= 99
+        ? '🫖 Grab Boiling Kettle (100°C) →'
+        : `🫖 Grab Kettle (${kTemp}°C) →`;
+    }
+  } else if (phase === 'POUR_HOT') {
+    els.btnPour.className = `pour-btn mode-hot ${snapshot.isPouring ? 'is-pressing' : ''}`;
+    els.pourBtnIcon.textContent = '🔥';
+    els.pourBtnTitle.textContent = isCompact ? 'Hold: Boiling Water' : 'Hold to Pour Boiling Water';
+    els.pourBtnSub.textContent = isTouch
+      ? 'Release on catch & whip circles!'
+      : 'Release as soon as it catches & whip circles!';
+
+    const showReboil = snapshot.hotWaterMl < 5 && kTemp < 96 && !snapshot.kettleBurnerOn;
+    els.btnSecondary.classList.toggle('hidden', !showReboil);
+
+    if (snapshot.gelatinization >= 0.48) {
+      els.btnPrimaryNext.className = 'primary-next-btn';
+      els.btnPrimaryNext.textContent = isCompact
+        ? '✨ Done — Dress →'
+        : '✨ Done Turning — Dress & Serve →';
+    } else if (snapshot.hotWaterMl > 95 && !snapshot.isPouring) {
+      els.btnPrimaryNext.className = 'primary-next-btn warn-cta';
+      els.btnPrimaryNext.textContent = isCompact
+        ? '😭 Not Thickening?'
+        : '😭 Why Isn’t It Thickening?';
+    } else {
+      els.btnPrimaryNext.className = 'primary-next-btn';
+      els.btnPrimaryNext.textContent = isCompact
+        ? '🫖 Pour & Stir...'
+        : '🫖 Pour Hot Water & Stir...';
+    }
+  } else if (phase === 'STOVE_RESCUE') {
+    els.btnSecondary.classList.add('hidden');
+    els.btnPrimaryNext.className = snapshot.gelatinization >= 0.78
+      ? 'primary-next-btn'
+      : 'primary-next-btn warn-cta';
+    els.btnPrimaryNext.textContent = snapshot.gelatinization >= 0.78
+      ? '🔥 Take Pot Off Flame & Serve →'
+      : '🔥 Take Pot Off Early →';
+  } else if (phase === 'TOPPINGS') {
+    els.btnPour.className = `pour-btn mode-milk ${snapshot.isPouring ? 'is-pressing' : ''}`;
+    els.pourBtnIcon.textContent = '🥛';
+    els.pourBtnTitle.textContent = isCompact ? 'Hold: Peak Milk' : 'Hold to Swirl Milk';
+    els.pourBtnSub.textContent = isCompact ? 'Creamy milk swirl' : 'Creamy evaporated milk drizzle';
+    els.btnSecondary.classList.add('hidden');
+    els.btnPrimaryNext.className = 'primary-next-btn';
+    els.btnPrimaryNext.textContent = isCompact ? '🍽️ Serve Bowl!' : '🍽️ Serve & Taste Test!';
+  }
+
+  lastPhaseRendered = phase;
+}
+
+// Responsive Resize (including mobile browser chrome / visualViewport & orientation changes)
+function syncViewportSize() {
+  renderer.resize(canvasMount.clientWidth || window.innerWidth, canvasMount.clientHeight || window.innerHeight);
+}
+
+window.addEventListener('resize', syncViewportSize);
+window.addEventListener('orientationchange', () => {
+  requestAnimationFrame(syncViewportSize);
+});
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', syncViewportSize);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    sound.silence();
+  }
+});
+
+renderVarietyPicker();
+
+// Main 60fps Game Loop
+let prevTime = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - prevTime) / 1000);
+  prevTime = now;
+
+  sim.step(dt, input.getState());
+  const snapshot = sim.getRenderSnapshot();
+  renderer.render(snapshot, dt);
+  sound.update(snapshot, dt);
+  syncHud(snapshot);
+
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+
+
+  },
+  'src/config/papVarieties.js': function(__exports, __require) {
+/**
+ * Pap varieties, toppings, and Nigerian breakfast sides.
+ * Material colors & optical parameters are renderer-agnostic so both
+ * Canvas2DRenderer and a future WebGL3DRenderer (Three.js) consume them directly.
+ */
+const PAP_VARIETIES = {
+  white_akamu: {
+    id: 'white_akamu',
+    name: 'White Akamu',
+    localNames: 'Akamu • Ogi Funfun',
+    grain: 'Fermented White Maize',
+    tagline: 'Silky porcelain classic — turns pearly & slightly translucent when caught right.',
+    // Optical colors across states (RGB arrays [r, g, b] for smooth shader/canvas interpolation)
+    rawChunkColor: [244, 241, 232],
+    rawShadowColor: [212, 206, 192],
+    slurryColor: [248, 246, 240],
+    cookedColor: [236, 232, 220],
+    cookedDeepColor: [218, 213, 198],
+    specularTint: [255, 255, 252],
+    curdTint: [226, 222, 208],
+    // Subtle physical personality
+    gelTempOffsetC: 0,       // Standard 73.5°C peak catch
+    bodyMultiplier: 1.0
+  },
+  yellow_ogi: {
+    id: 'yellow_ogi',
+    name: 'Yellow Ogi',
+    localNames: 'Ogi Pupa • Golden Akamu',
+    grain: 'Fermented Yellow Maize',
+    tagline: 'Sunny custard gold — rich aroma, warm glow, and velvety body.',
+    rawChunkColor: [246, 214, 124],
+    rawShadowColor: [209, 170, 78],
+    slurryColor: [250, 224, 142],
+    cookedColor: [242, 192, 72],
+    cookedDeepColor: [219, 162, 44],
+    specularTint: [255, 246, 208],
+    curdTint: [235, 180, 58],
+    gelTempOffsetC: -0.5,    // Slightly quicker warm catch
+    bodyMultiplier: 1.03
+  },
+  oka_baba: {
+    id: 'oka_baba',
+    name: 'Oka Baba (Dawa)',
+    localNames: 'Guinea Corn • Red Sorghum Pap',
+    grain: 'Fermented Red Sorghum',
+    tagline: 'Deep earthy terracotta-cocoa — hearty, nourishing, and beloved by elders.',
+    rawChunkColor: [189, 138, 118],
+    rawShadowColor: [145, 98, 80],
+    slurryColor: [198, 148, 128],
+    cookedColor: [152, 92, 72],
+    cookedDeepColor: [124, 69, 52],
+    specularTint: [242, 212, 198],
+    curdTint: [140, 82, 63],
+    gelTempOffsetC: 0.6,     // Needs full rolling boil punch!
+    bodyMultiplier: 1.06
+  }
+};
+const SWEETENERS = [
+  { id: 'none', label: 'No Sugar (Tangy)', icon: '🍋', cubes: 0, honey: false },
+  { id: 'cube_1', label: '1 Sugar Cube', icon: '🧊', cubes: 1, honey: false },
+  { id: 'cube_2', label: '2 Sugar Cubes', icon: '🧊🧊', cubes: 2, honey: false },
+  { id: 'honey', label: 'Pure Honey Swirl', icon: '🍯', cubes: 0, honey: true }
+];
+const SIDES = [
+  {
+    id: 'akara',
+    name: 'Hot Akara',
+    subtitle: 'Crispy fried bean cakes with ata rodo & red onion flecks',
+    badge: 'Saturday Morning GOAT'
+  },
+  {
+    id: 'moimoi',
+    name: 'Leaf Moi Moi',
+    subtitle: 'Steamed bean pudding in Ewe Eran leaf with boiled egg',
+    badge: 'Rich & Savory'
+  },
+  {
+    id: 'dodo',
+    name: 'Sweet Dodo',
+    subtitle: 'Caramelized golden-fried ripe plantain slices',
+    badge: 'Sweet & Golden'
+  }
+];
+
+__exports.PAP_VARIETIES = PAP_VARIETIES;
+__exports.SWEETENERS = SWEETENERS;
+__exports.SIDES = SIDES;
+  },
+  'src/simulation/papSimulation.js': function(__exports, __require) {
+const {  PAP_VARIETIES, SWEETENERS, SIDES  } = __require('src/config/papVarieties.js');
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const smoothstep = (e0, e1, x) => {
+  const t = clamp((x - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+const SWIRL_RINGS = 12;
+class PapSimulation {
+  constructor() {
+    this.varietyId = 'white_akamu';
+    this.reset('SELECT');
+  }
+
+  setVariety(varietyId) {
+    if (PAP_VARIETIES[varietyId]) {
+      this.varietyId = varietyId;
+    }
+  }
+
+  getVariety() {
+    return PAP_VARIETIES[this.varietyId] || PAP_VARIETIES.white_akamu;
+  }
+
+  reset(initialPhase = 'SLURRY') {
+    this.phase = initialPhase; // 'SELECT' | 'SLURRY' | 'POUR_HOT' | 'WATERY_CHOICE' | 'STOVE_RESCUE' | 'TOPPINGS' | 'RESULTS'
+    this.elapsed = 0;
+    this.phaseTime = 0;
+
+    // Physical quantities
+    this.rawPasteGrams = 90;       // ~3.5 heaping tbsp raw wet akamu cake
+    this.coldWaterMl = 0;          // Ideal: 38 - 58 mL (peak ~46 mL)
+    this.hotWaterMl = 0;           // Ideal: ~220 - 245 mL
+    this.maxBowlVolumeMl = 430;    // Brim capacity of the enamel bowl
+    this.roomTempC = 27.0;
+    this.bowlTempC = 27.0;
+
+    // Kettle state
+    this.kettleTempC = 79.0;       // Heating up on the side burner when Phase 1 begins
+    this.kettleBurnerOn = true;
+    this.kettleBoiledOnce = false;
+
+    // Raw akamu chunks in normalized bowl coordinates [-1, 1]
+    this.lumps = this._createInitialLumps();
+    this.initialLumpMass = this.lumps.reduce((acc, l) => acc + l.mass, 0);
+    this.cakedBottomLoss = 0;      // Starch lost to caked bottom lumps if poured onto settled slurry
+
+    // Suspension & gelatinization kinetics
+    this.idleStirTime = 0;
+    this.settledFraction = 0;      // 0..1 how much dissolved starch settled to bottom
+    this.hydrationWarmup = 0;      // Creates the realistic ~1.0s deceptive lag before "the catch"
+    this.gelatinization = 0;       // 0..1 degree of starch gelatinization (G)
+    this.curdiness = 0;            // 0..1 patchy gelatinizing curds formed during the catch
+    this.plasticityWindow = 1.0;   // 1..0 window during which curds can be sheared completely smooth
+    this.glossiness = 0.08;        // 0..1 velvety translucent sheen developed by brisk shear stirring
+    this.catchTriggered = false;
+    this.catchFlashTimer = 0;
+
+    // Diagnostics / failure tracking
+    this.wateryFailureReason = '';
+    this.wateryChoicePrompted = false;
+    this.acceptedWateryPap = false;
+    this.usedStoveRescue = false;
+    this.scorchRisk = 0;
+    this.scorchAmount = 0;
+    this.kettlePourStartTempC = 100;
+
+    // Spoon & fluid motion state (normalized bowl space [-1, 1])
+    this.spoon = {
+      x: 0.25,
+      y: 0.2,
+      vx: 0,
+      vy: 0,
+      inBowl: false,
+      dragResistance: 0.15
+    };
+    this.linearStirSpeed = 0;      // Smoothed linear speed
+    this.angularVelocity = 0;      // Signed rad/s swirl
+    this.circularStirQuality = 0;  // 0..1 brisk circular stirring metric
+    this.swirlRings = new Float32Array(SWIRL_RINGS); // Angular angle per concentric ring
+    this.swirlOmega = new Float32Array(SWIRL_RINGS); // Angular velocity per ring
+
+    // Pouring state
+    this.isPouring = false;
+    this.pourStreamProgress = 0;   // 0..1 animation of falling liquid stream
+    this.timeSinceLastHotPour = 0;
+
+    // Toppings & serving state
+    this.milkMl = 0;
+    this.milkDrops = [];           // Advected creamy swirl particles [{ r, theta, size, alpha }]
+    this.sweetenerId = 'cube_2';
+    this.sugarCubes = [];          // [{ x, y, sinkProgress }]
+    this.honeyDrizzle = 0;
+    this.sideId = 'akara';
+
+    // Live kitchen commentary
+    this.commentary = {
+      text: 'Add a small splash of cool water and mash all raw akamu lumps smooth!',
+      tone: 'neutral', // 'neutral' | 'good' | 'warn' | 'urgent'
+      ttl: 99
+    };
+  }
+
+  _createInitialLumps() {
+    // 1 large crumbly block in center + 7 smaller broken chunks around it
+    const chunks = [
+      { id: 1, x: 0.0, y: 0.02, r: 0.21, mass: 36, sealed: false, seed: 0.1 },
+      { id: 2, x: -0.22, y: -0.10, r: 0.12, mass: 11, sealed: false, seed: 0.4 },
+      { id: 3, x: 0.20, y: -0.13, r: 0.11, mass: 10, sealed: false, seed: 0.7 },
+      { id: 4, x: -0.14, y: 0.21, r: 0.105, mass: 9, sealed: false, seed: 1.2 },
+      { id: 5, x: 0.18, y: 0.17, r: 0.10, mass: 8, sealed: false, seed: 1.9 },
+      { id: 6, x: 0.03, y: -0.22, r: 0.09, mass: 6, sealed: false, seed: 2.5 },
+      { id: 7, x: -0.27, y: 0.09, r: 0.085, mass: 5, sealed: false, seed: 3.1 },
+      { id: 8, x: 0.27, y: 0.02, r: 0.08, mass: 5, sealed: false, seed: 3.8 }
+    ];
+    return chunks;
+  }
+
+  startRound(varietyId) {
+    if (varietyId) this.setVariety(varietyId);
+    this.reset('SLURRY');
+  }
+
+  grabKettle() {
+    if (this.phase !== 'SLURRY') return;
+    this.phase = 'POUR_HOT';
+    this.phaseTime = 0;
+    this.kettleBurnerOn = false;
+    this.kettlePourStartTempC = this.kettleTempC;
+    this.isPouring = false;
+    this.pourStreamProgress = 0;
+
+    if (this.kettleTempC < 94) {
+      this._setCommentary(
+        `Careful o! Kettle is only ${Math.round(this.kettleTempC)}°C—not a rolling boil yet!`,
+        'warn'
+      );
+    } else if (this.settledFraction > 0.22) {
+      this._setCommentary(
+        'Wait small! Starch settled at the bottom—give it one quick stir before pouring!',
+        'warn'
+      );
+    } else {
+      this._setCommentary(
+        'Kettle is piping hot! Hold Pour while stirring briskly until it catches!',
+        'neutral'
+      );
+    }
+  }
+
+  reboilKettle() {
+    if (this.phase === 'POUR_HOT' && this.hotWaterMl < 5) {
+      this.kettleBurnerOn = true;
+      this._setCommentary('Back on the flame—bringing kettle up to a full 100°C rolling boil!', 'good');
+    }
+  }
+
+  triggerWateryDecision() {
+    if (this.phase !== 'POUR_HOT') return;
+    this.isPouring = false;
+    this.wateryFailureReason = this._diagnoseWateryReason();
+    this.phase = 'WATERY_CHOICE';
+    this.phaseTime = 0;
+  }
+
+  chooseStoveRescue() {
+    this.phase = 'STOVE_RESCUE';
+    this.phaseTime = 0;
+    this.usedStoveRescue = true;
+    this.isPouring = false;
+    this._setCommentary(
+      'Pot is on the gas flame! Stir wide circles non-stop so the bottom doesn’t burn!',
+      'urgent'
+    );
+  }
+
+  chooseEnjoyWateryPap() {
+    this.acceptedWateryPap = true;
+    this.goToToppings();
+  }
+
+  finishTurning() {
+    if (this.phase === 'POUR_HOT') {
+      // If it clearly failed to thicken, offer the iconic choice!
+      if (this.gelatinization < 0.48 && this.hotWaterMl > 40) {
+        this.triggerWateryDecision();
+        return;
+      }
+      this.goToToppings();
+    } else if (this.phase === 'STOVE_RESCUE') {
+      this.goToToppings();
+    }
+  }
+
+  goToToppings() {
+    this.isPouring = false;
+    this.pourStreamProgress = 0;
+    this.phase = 'TOPPINGS';
+    this.phaseTime = 0;
+    this.setSweetener(this.sweetenerId);
+    if (this.acceptedWateryPap) {
+      this._setCommentary(
+        'Proudly dressing your watery corn milk! Add Peak milk & sugar with full confidence.',
+        'warn'
+      );
+    } else {
+      this._setCommentary(
+        'Looking good! Swirl in creamy evaporated milk, add sugar if you like, and pick a side!',
+        'good'
+      );
+    }
+  }
+
+  setSweetener(sweetenerId) {
+    const found = SWEETENERS.find((s) => s.id === sweetenerId);
+    if (!found) return;
+    this.sweetenerId = sweetenerId;
+    this.sugarCubes = [];
+    this.honeyDrizzle = found.honey ? 1 : 0;
+    for (let i = 0; i < found.cubes; i++) {
+      const angle = -0.5 + i * 1.1;
+      const dist = 0.16 + i * 0.06;
+      this.sugarCubes.push({
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        sinkProgress: 0
+      });
+    }
+  }
+
+  setSide(sideId) {
+    if (SIDES.some((s) => s.id === sideId)) {
+      this.sideId = sideId;
+    }
+  }
+
+  serveBowl() {
+    this.isPouring = false;
+    this.phase = 'RESULTS';
+    this.phaseTime = 0;
+  }
+
+  _setCommentary(text, tone = 'neutral') {
+    this.commentary = { text, tone, ttl: 6.0 };
+  }
+
+  _diagnoseWateryReason() {
+    if (this.coldWaterMl > 78) {
+      return `You poured ${Math.round(this.coldWaterMl)} mL of cool water during the slurry stage (sweet spot is ~40–55 mL). All that cool water soaked up the heat so the bowl stalled at ${Math.round(this.bowlTempC)}°C instead of crossing 74°C!`;
+    }
+    if (this.kettlePourStartTempC < 93) {
+      return `The kettle water was only ${Math.round(this.kettlePourStartTempC)}°C instead of a full 100°C rolling boil, so the mixture stalled at ${Math.round(this.bowlTempC)}°C and couldn't shock the starch!`;
+    }
+    if (this.hotWaterMl < 140) {
+      return `You stopped pouring hot water too early (${Math.round(this.hotWaterMl)} mL), before the bowl reached the ~74°C gelatinization flashpoint!`;
+    }
+    return `The bowl temperature stalled at ${Math.round(this.bowlTempC)}°C before the starch could fully gelatinize!`;
+  }
+
+  getTotalVolumeMl() {
+    return this.rawPasteGrams + this.coldWaterMl + this.hotWaterMl + this.milkMl;
+  }
+
+  getRemainingLumpMass() {
+    return this.lumps.reduce((sum, l) => sum + l.mass, 0);
+  }
+
+  getLumpFraction() {
+    return clamp(this.getRemainingLumpMass() / this.initialLumpMass, 0, 1);
+  }
+
+  getCookedThickness() {
+    // Combines gelatinization degree (0..1) and starch-to-water concentration
+    const totalWater = this.coldWaterMl + this.hotWaterMl;
+    const effectivePasteFactor = clamp(
+      1 - 0.55 * this.getLumpFraction() - 0.45 * this.cakedBottomLoss,
+      0.25,
+      1
+    );
+    // Ideal total water for 90g raw paste is ~275 mL
+    const concRatio = (275 * effectivePasteFactor) / Math.max(95, totalWater);
+    const varietyBody = this.getVariety().bodyMultiplier;
+    const baseSlurryVisc = totalWater < 55
+      ? lerp(0.55, 0.22, totalWater / 55)
+      : lerp(0.22, 0.06, clamp((totalWater - 55) / 140, 0, 1));
+
+    const cookedVisc = Math.pow(concRatio, 2.35) * varietyBody;
+    return lerp(baseSlurryVisc, cookedVisc, this.gelatinization);
+  }
+
+  /**
+   * Main fixed/frame physics step.
+   * @param {number} dt - Delta time in seconds (clamped for stability)
+   * @param {object} input - { pointerX, pointerY, pointerInBowl, pointerActive, isPouring }
+   */
+  step(dt, input) {
+    const safeDt = clamp(dt, 0.001, 0.05);
+    this.elapsed += safeDt;
+    this.phaseTime += safeDt;
+
+    if (this.phase === 'SELECT' || this.phase === 'RESULTS' || this.phase === 'WATERY_CHOICE') {
+      this._stepIdleSwirl(safeDt);
+      return;
+    }
+
+    this.isPouring = Boolean(input.isPouring);
+
+    // 1. Update Kettle Temperature
+    this._stepKettle(safeDt);
+
+    // 2. Update Spoon Physics (Oobleck & Viscosity Drag!)
+    this._stepSpoonAndSwirl(safeDt, input);
+
+    // 3. Phase-specific Fluid & Thermal Physics
+    if (this.phase === 'SLURRY') {
+      this._stepSlurryPhase(safeDt);
+    } else if (this.phase === 'POUR_HOT') {
+      this._stepHotPourPhase(safeDt);
+    } else if (this.phase === 'STOVE_RESCUE') {
+      this._stepStoveRescuePhase(safeDt);
+    } else if (this.phase === 'TOPPINGS') {
+      this._stepToppingsPhase(safeDt);
+    }
+  }
+
+  _stepKettle(dt) {
+    if (this.kettleBurnerOn) {
+      this.kettleTempC = Math.min(100, this.kettleTempC + dt * 2.45);
+      if (this.kettleTempC >= 99.6) {
+        this.kettleBoiledOnce = true;
+      }
+    } else if (this.phase === 'POUR_HOT' && !this.isPouring) {
+      // Slowly cools off the burner if player waits around
+      this.kettleTempC = Math.max(68, this.kettleTempC - dt * 0.42);
+    }
+  }
+
+  _stepSpoonAndSwirl(dt, input) {
+    const thickness = this.getCookedThickness();
+
+    // Calculate physical spoon resistance:
+    // - Dry cold paste (<22mL) has stiff shear-thickening "oobleck" drag!
+    // - Settled starch cake at bottom drags the spoon until broken up!
+    // - Thick cooked pap has plush, creamy viscous resistance!
+    let drag = 0.12;
+    if (this.phase === 'SLURRY') {
+      if (this.coldWaterMl < 24) {
+        drag = lerp(0.76, 0.28, this.coldWaterMl / 24);
+      } else if (this.coldWaterMl <= 70) {
+        drag = lerp(0.28, 0.14, (this.coldWaterMl - 24) / 46);
+      } else {
+        drag = 0.07; // Suspiciously watery & weightless!
+      }
+      drag += this.settledFraction * 0.35;
+    } else {
+      drag = clamp(0.08 + thickness * 0.38 + this.settledFraction * 0.28, 0.07, 0.78);
+    }
+
+    this.spoon.dragResistance = drag;
+    this.spoon.inBowl = Boolean(input.pointerInBowl);
+
+    if (input.pointerInBowl) {
+      // Clamp target inside bowl rim
+      let tx = input.pointerX;
+      let ty = input.pointerY;
+      const dist = Math.hypot(tx, ty);
+      const maxR = 0.84;
+      if (dist > maxR) {
+        tx = (tx / dist) * maxR;
+        ty = (ty / dist) * maxR;
+      }
+
+      // Spring-damper follow speed inversely related to drag
+      const followRate = lerp(26, 6.5, drag);
+      const stepFactor = 1 - Math.exp(-followRate * dt);
+      const prevX = this.spoon.x;
+      const prevY = this.spoon.y;
+
+      this.spoon.x += (tx - this.spoon.x) * stepFactor;
+      this.spoon.y += (ty - this.spoon.y) * stepFactor;
+
+      const vx = (this.spoon.x - prevX) / dt;
+      const vy = (this.spoon.y - prevY) / dt;
+
+      // Extra oobleck spike if whipping too fast in near-dry paste
+      if (this.phase === 'SLURRY' && this.coldWaterMl < 26 && Math.hypot(vx, vy) > 2.2) {
+        this.spoon.x = lerp(prevX, this.spoon.x, 0.55);
+        this.spoon.y = lerp(prevY, this.spoon.y, 0.55);
+      }
+
+      this.spoon.vx = (this.spoon.x - prevX) / dt;
+      this.spoon.vy = (this.spoon.y - prevY) / dt;
+
+      const rawSpeed = Math.hypot(this.spoon.vx, this.spoon.vy);
+      this.linearStirSpeed = lerp(this.linearStirSpeed, rawSpeed, 1 - Math.exp(-12 * dt));
+
+      // Signed angular sweep around bowl center (cross product x*vy - y*vx)
+      const rSq = Math.max(0.14, this.spoon.x * this.spoon.x + this.spoon.y * this.spoon.y);
+      const instOmega = (this.spoon.x * this.spoon.vy - this.spoon.y * this.spoon.vx) / rSq;
+      this.angularVelocity = lerp(this.angularVelocity, instOmega, 1 - Math.exp(-10 * dt));
+
+      // Circular stir quality rewards sustained brisk circular motion (1.4 - 2.6 rev/s => ~9-16 rad/s)
+      const absOmega = Math.abs(this.angularVelocity);
+      const targetQuality = clamp((absOmega - 1.8) / 9.5, 0, 1) * 0.78 + clamp(( this.linearStirSpeed - 0.6) / 3.0, 0, 1) * 0.22;
+      this.circularStirQuality = lerp(this.circularStirQuality, clamp(targetQuality, 0, 1), 1 - Math.exp(-9 * dt));
+
+      // Drive concentric fluid swirl rings around spoon radius
+      const spoonR = Math.hypot(this.spoon.x, this.spoon.y);
+      for (let i = 0; i < SWIRL_RINGS; i++) {
+        const ringR = (i + 0.5) / SWIRL_RINGS;
+        const proximity = Math.exp(-Math.pow((ringR - spoonR) / 0.34, 2));
+        const coupling = proximity * lerp(4.8, 2.2, clamp(thickness * 0.5, 0, 1));
+        this.swirlOmega[i] += (this.angularVelocity * 0.62 - this.swirlOmega[i]) * Math.min(1, coupling * dt);
+      }
+    } else {
+      this.spoon.vx = 0;
+      this.spoon.vy = 0;
+      this.linearStirSpeed = lerp(this.linearStirSpeed, 0, 1 - Math.exp(-8 * dt));
+      this.angularVelocity = lerp(this.angularVelocity, 0, 1 - Math.exp(-6 * dt));
+      this.circularStirQuality = lerp(this.circularStirQuality, 0, 1 - Math.exp(-7 * dt));
+    }
+
+    this._stepFluidRings(dt, thickness);
+  }
+
+  _stepIdleSwirl(dt) {
+    this.linearStirSpeed = 0;
+    this.angularVelocity = 0;
+    this.circularStirQuality = 0;
+    this._stepFluidRings(dt, this.getCookedThickness());
+  }
+
+  _stepFluidRings(dt, thickness) {
+    // Viscous damping + radial shear diffusion between neighboring fluid rings
+    const damping = lerp(1.3, 4.8, clamp(thickness * 0.75, 0, 1));
+    for (let i = 0; i < SWIRL_RINGS; i++) {
+      this.swirlOmega[i] *= Math.exp(-damping * dt);
+      if (i > 0) {
+        const diff = (this.swirlOmega[i - 1] - this.swirlOmega[i]) * 2.5 * dt;
+        this.swirlOmega[i] += diff;
+        this.swirlOmega[i - 1] -= diff;
+      }
+      this.swirlRings[i] += this.swirlOmega[i] * dt;
+    }
+
+    // Advect milk drops along swirl field!
+    if (this.milkDrops.length > 0) {
+      for (const drop of this.milkDrops) {
+        const ringIdx = clamp(Math.floor(drop.r * SWIRL_RINGS), 0, SWIRL_RINGS - 1);
+        drop.theta += this.swirlOmega[ringIdx] * dt * 0.85;
+        drop.stretch = clamp((drop.stretch || 0) + Math.abs(this.swirlOmega[ringIdx]) * dt * 0.22, 0, 2.4);
+      }
+    }
+  }
+
+  _stepSlurryPhase(dt) {
+    // 1. Pouring room-temp water
+    if (this.isPouring && this.getTotalVolumeMl() < this.maxBowlVolumeMl - 60) {
+      this.pourStreamProgress = Math.min(1, this.pourStreamProgress + dt * 7);
+      const added = 34 * dt;
+      this.coldWaterMl += added;
+      // Pouring stream agitates settled layer slightly
+      this.settledFraction = Math.max(0, this.settledFraction - dt * 0.15);
+    } else {
+      this.pourStreamProgress = Math.max(0, this.pourStreamProgress - dt * 8);
+    }
+
+    // 2. Crushing & dissolving raw akamu chunks
+    this._crushRawLumps(dt);
+
+    // 3. Starch settling if left idle!
+    this._updateStarchSettling(dt);
+
+    // 4. Contextual Nigerian kitchen feedback
+    const lumpPct = this.getLumpFraction();
+    if (this.coldWaterMl < 16 && this.linearStirSpeed > 0.8) {
+      this._setCommentary('Paste is dry & stiff like oobleck! Hold Pour to add a splash of cool water.', 'warn');
+    } else if (this.coldWaterMl > 92) {
+      this._setCommentary('Ah-ah! That cool water plenty o... hope boiling water fit still cook am!', 'warn');
+    } else if (this.coldWaterMl > 72 && lumpPct < 0.15) {
+      this._setCommentary('Slurry is getting quite thin—careful not to add more cool water!', 'warn');
+    } else if (lumpPct < 0.04 && this.coldWaterMl >= 30 && this.coldWaterMl <= 70) {
+      if (this.kettleTempC >= 99.5) {
+        this._setCommentary('Silky heavy-cream slurry & kettle is whistling at 100°C! Grab the kettle!', 'good');
+      } else {
+        this._setCommentary(
+          `Smooth slurry! Keep it gently moving while kettle hits 100°C (${Math.round(this.kettleTempC)}°C)...`,
+          'good'
+        );
+      }
+    } else if (this.settledFraction > 0.25) {
+      this._setCommentary('See how the starch is settling at the bottom? Stir it back up!', 'warn');
+    }
+  }
+
+  _crushRawLumps(dt) {
+    if (this.lumps.length === 0) return;
+
+    // Hydration curve: dry (<12mL) barely dissolves; 32..68mL hydrates & crushes smoothly;
+    // overly watery (>95mL) makes small lumps slippery and chase-prone!
+    let hydration = 0.08;
+    if (this.coldWaterMl >= 10 && this.coldWaterMl < 32) {
+      hydration = lerp(0.14, 0.92, (this.coldWaterMl - 10) / 22);
+    } else if (this.coldWaterMl >= 32 && this.coldWaterMl <= 72) {
+      hydration = 1.0;
+    } else if (this.coldWaterMl > 72) {
+      hydration = lerp(1.0, 0.65, clamp((this.coldWaterMl - 72) / 60, 0, 1));
+    }
+
+    const spoonSpeed = this.linearStirSpeed;
+    const stirActivity = clamp(this.circularStirQuality * 0.75 + clamp(spoonSpeed / 2.2, 0, 1) * 0.55, 0, 1.35);
+    const nextLumps = [];
+
+    for (const lump of this.lumps) {
+      // Gently advect lumps with fluid swirl and pull slightly inward so they don't hide on the rim
+      const r = Math.hypot(lump.x, lump.y);
+      if (r > 0.02) {
+        const ringIdx = clamp(Math.floor(r * SWIRL_RINGS), 0, SWIRL_RINGS - 1);
+        const omega = this.swirlOmega[ringIdx] * (lump.sealed ? 0.65 : 0.42);
+        const cos = Math.cos(omega * dt);
+        const sin = Math.sin(omega * dt);
+        const inward = r > 0.45 ? 1 - 0.35 * dt : 1;
+        lump.x = (lump.x * cos - lump.y * sin) * inward;
+        lump.y = (lump.x * sin + lump.y * cos) * inward;
+      }
+
+      if (!lump.sealed && this.spoon.inBowl && spoonSpeed > 0.16) {
+        const dx = lump.x - this.spoon.x;
+        const dy = lump.y - this.spoon.y;
+        const dist = Math.hypot(dx, dy);
+        const hitRadius = lump.r + 0.22;
+
+        if (dist < hitRadius) {
+          const contact = 1 - dist / hitRadius;
+          const crushPower = hydration * clamp(spoonSpeed / 1.4, 0.25, 1.85) * (0.6 + 0.7 * contact);
+          const massRemoved = crushPower * 48 * dt;
+
+          // Gentle nudge when pushed by spoon (kept well inside bowl mixing zone)
+          if (dist > 0.01) {
+            const push = (0.14 + (1 - hydration) * 0.28) * dt * spoonSpeed;
+            lump.x = clamp(lump.x + (dx / dist) * push, -0.52, 0.52);
+            lump.y = clamp(lump.y + (dy / dist) * push, -0.52, 0.52);
+          }
+
+          // Split large chunk into 2 smaller chunks (framerate-independent check!)
+          if (lump.mass > 14 && hydration > 0.42 && spoonSpeed > 0.45) {
+            const halfMass = Math.max(1, (lump.mass - massRemoved) * 0.5);
+            const perpX = -dy / Math.max(0.05, dist);
+            const perpY = dx / Math.max(0.05, dist);
+            nextLumps.push({
+              ...lump,
+              mass: halfMass,
+              r: Math.max(0.04, Math.sqrt(halfMass / 36) * 0.20),
+              x: clamp(lump.x + perpX * 0.07, -0.5, 0.5),
+              y: clamp(lump.y + perpY * 0.07, -0.5, 0.5)
+            });
+            nextLumps.push({
+              ...lump,
+              id: Math.random(),
+              mass: halfMass,
+              r: Math.max(0.04, Math.sqrt(halfMass / 36) * 0.20),
+              x: clamp(lump.x - perpX * 0.07, -0.5, 0.5),
+              y: clamp(lump.y - perpY * 0.07, -0.5, 0.5),
+              seed: lump.seed + 1.3
+            });
+            continue;
+          }
+
+          lump.mass -= massRemoved;
+          lump.r = Math.max(0.032, Math.sqrt(Math.max(0, lump.mass) / 36) * 0.21);
+        }
+      }
+
+      // Hydrated smaller chunks dissolve smoothly under brisk swirling shear in the bowl
+      if (!lump.sealed && hydration >= 0.48 && lump.mass < 15 && stirActivity > 0.15) {
+        const shearDissolve = (hydration * hydration) * stirActivity * (lump.mass < 6 ? 5.8 : 3.4);
+        lump.mass -= dt * shearDissolve;
+        lump.r = Math.max(0.025, Math.sqrt(Math.max(0, lump.mass) / 36) * 0.21);
+      }
+
+      if (lump.mass > 0.45) {
+        nextLumps.push(lump);
+      }
+    }
+
+    this.lumps = nextLumps;
+  }
+
+  _updateStarchSettling(dt) {
+    const dissolved = 1 - this.getLumpFraction();
+    if (dissolved < 0.25 || this.coldWaterMl < 14 || this.gelatinization > 0.2) {
+      if (this.linearStirSpeed > 0.3) {
+        this.settledFraction = Math.max(0, this.settledFraction - dt * 0.9);
+      }
+      return;
+    }
+
+    if (this.linearStirSpeed < 0.22 && !this.isPouring) {
+      this.idleStirTime += dt;
+      if (this.idleStirTime > 3.0) {
+        // Settles faster if slurry has more water
+        const waterFactor = clamp(this.coldWaterMl / 45, 0.7, 1.6);
+        this.settledFraction = clamp(this.settledFraction + dt * 0.075 * waterFactor * dissolved, 0, 0.85);
+      }
+    } else {
+      this.idleStirTime = Math.max(0, this.idleStirTime - dt * 3.5);
+      const wakeupRate = (0.65 * this.circularStirQuality + 0.35 * clamp(this.linearStirSpeed / 2, 0, 1));
+      this.settledFraction = Math.max(0, this.settledFraction - dt * 1.15 * wakeupRate);
+    }
+  }
+
+  _stepHotPourPhase(dt) {
+    // Before hot water enters, a quick wake-up stir cleanly re-suspends settled starch!
+    if (this.hotWaterMl < 4) {
+      this._updateStarchSettling(dt);
+    } else if (this.settledFraction > 0.20 && this.hotWaterMl >= 35) {
+      // Boiling stream hit settled bottom cake directly — scalds into bottom clumps!
+      this._sealLumpsAndSettledCake(dt);
+    }
+
+    // 1. Pouring boiling water from kettle
+    const spaceLeft = this.maxBowlVolumeMl - this.getTotalVolumeMl();
+    if (this.isPouring && spaceLeft > 2) {
+      if (this.hotWaterMl < 3) {
+        this.kettlePourStartTempC = this.kettleTempC;
+      }
+      if (this.kettleBurnerOn) this.kettleBurnerOn = false;
+      this.pourStreamProgress = Math.min(1, this.pourStreamProgress + dt * 8);
+      const dHot = Math.min(spaceLeft, 65 * dt);
+
+      // Exact enthalpy mixing: (M_cur * T_cur + dHot * T_kettle) / (M_cur + dHot)
+      const currentThermalMass = 65 + this.coldWaterMl + (this.hotWaterMl);
+      this.bowlTempC = (currentThermalMass * this.bowlTempC + dHot * this.kettleTempC) / (currentThermalMass + dHot);
+      this.hotWaterMl += dHot;
+      this.timeSinceLastHotPour = 0;
+
+      // Pouring turbulence stirs up a tiny bit of lightly settled starch,
+      // UNLESS heavily settled (>0.22), which cakes at the bottom when hot!
+      if (this.settledFraction < 0.16) {
+        this.settledFraction = Math.max(0, this.settledFraction - dt * 0.22);
+      }
+    } else {
+      this.pourStreamProgress = Math.max(0, this.pourStreamProgress - dt * 8);
+      if (this.hotWaterMl > 10) {
+        this.timeSinceLastHotPour += dt;
+        // Gentle ambient bowl cooling
+        this.bowlTempC = Math.max(this.roomTempC, this.bowlTempC - dt * 0.24);
+      }
+    }
+
+    // Still allow crushing raw lumps ONLY while bowl is still cool (<67°C)
+    if (this.bowlTempC < 67) {
+      this._crushRawLumps(dt);
+    } else {
+      // Advect any sealed lumps & thermally seal raw chunks + caked bottom!
+      this._sealLumpsAndSettledCake(dt);
+    }
+
+    // 2. Gelatinization & Curd Shear Physics
+    this._stepGelatinizationAndCurds(dt);
+
+    // 3. Auto-detect brim watery stall
+    if (
+      !this.wateryChoicePrompted &&
+      this.getTotalVolumeMl() >= this.maxBowlVolumeMl - 6 &&
+      this.timeSinceLastHotPour > 1.1 &&
+      this.gelatinization < 0.46
+    ) {
+      this.wateryChoicePrompted = true;
+      this.triggerWateryDecision();
+      return;
+    }
+
+    // 4. Contextual live coaching during the turn!
+    this._updateHotPourCommentary();
+  }
+
+  _sealLumpsAndSettledCake(dt) {
+    // Seal any un-mashed raw chunks once hot water hits >67°C!
+    for (const lump of this.lumps) {
+      lump.sealed = true;
+      const r = Math.hypot(lump.x, lump.y);
+      if (r > 0.02) {
+        const ringIdx = clamp(Math.floor(r * SWIRL_RINGS), 0, SWIRL_RINGS - 1);
+        const omega = this.swirlOmega[ringIdx] * 0.6;
+        const cos = Math.cos(omega * dt);
+        const sin = Math.sin(omega * dt);
+        const nx = lump.x * cos - lump.y * sin;
+        const ny = lump.x * sin + lump.y * cos;
+        lump.x = nx;
+        lump.y = ny;
+      }
+    }
+
+    // Convert un-stirred settled starch cake into permanent bottom clumps!
+    if (this.settledFraction > 0.16) {
+      const caked = this.settledFraction;
+      this.cakedBottomLoss = Math.min(0.65, this.cakedBottomLoss + caked * 0.65);
+      const numClumps = Math.min(5, Math.ceil(caked * 6));
+      for (let i = 0; i < numClumps; i++) {
+        const angle = (i / numClumps) * Math.PI * 2 + 0.4;
+        const dist = 0.14 + (i % 2) * 0.15;
+        this.lumps.push({
+          id: Math.random(),
+          x: Math.cos(angle) * dist,
+          y: Math.sin(angle) * dist,
+          r: 0.055 + caked * 0.04,
+          mass: 4.5 + caked * 5,
+          sealed: true,
+          seed: i * 1.7
+        });
+      }
+      this.settledFraction = 0;
+      this._setCommentary('Ouch! Settled starch at the bottom just cooked into lumps!', 'urgent');
+    } else {
+      this.settledFraction = 0;
+    }
+  }
+
+  _stepGelatinizationAndCurds(dt) {
+    const offset = this.getVariety().gelTempOffsetC;
+    const onsetTemp = 69.2 + offset;
+    const fullTemp = 75.4 + offset;
+
+    if (this.bowlTempC > onsetTemp) {
+      // Realistic ~1.05s hydration penetration warmup (the deceptive lag before "the catch"!)
+      const warmupSpeed = lerp(0.55, 1.35, clamp((this.bowlTempC - onsetTemp) / 6, 0, 1));
+      this.hydrationWarmup = Math.min(1, this.hydrationWarmup + dt * warmupSpeed);
+    }
+
+    const eqGel = smoothstep(onsetTemp, fullTemp, this.bowlTempC);
+    const kineticRate = this.hydrationWarmup < 0.72
+      ? 0.22 * this.hydrationWarmup
+      : lerp(0.65, 2.5, smoothstep(0.72, 1.0, this.hydrationWarmup));
+
+    if (eqGel > this.gelatinization) {
+      const prevG = this.gelatinization;
+      this.gelatinization = Math.min(eqGel, this.gelatinization + (eqGel - this.gelatinization + 0.14) * kineticRate * dt);
+      const dG = this.gelatinization - prevG;
+
+      // Trigger "THE CATCH" flash event!
+      if (!this.catchTriggered && this.gelatinization >= 0.34) {
+        this.catchTriggered = true;
+        this.catchFlashTimer = 1.6;
+      }
+
+      // Rapid gelatinization spawns curds unless brisk circular stirring shears them simultaneously!
+      const shearMitigation = 0.56 * this.circularStirQuality;
+      this.curdiness = clamp(this.curdiness + dG * Math.max(0.18, 0.84 - shearMitigation), 0, 1);
+    }
+
+    if (this.catchFlashTimer > 0) {
+      this.catchFlashTimer = Math.max(0, this.catchFlashTimer - dt);
+    }
+
+    // Plasticity window stays open during catching, then slowly sets over ~9 seconds once cooked
+    if (this.gelatinization > 0.72) {
+      this.plasticityWindow = Math.max(0.12, this.plasticityWindow - dt * 0.085);
+    }
+
+    // Brisk circular stirring shears curds into smooth velvety custard & builds mirror gloss!
+    if (this.gelatinization > 0.18 && this.circularStirQuality > 0.18) {
+      const shearPower = this.circularStirQuality * (0.35 + 0.65 * this.plasticityWindow);
+      this.curdiness = Math.max(0, this.curdiness - dt * 0.56 * shearPower);
+      this.glossiness = clamp(
+        this.glossiness + dt * 0.38 * this.circularStirQuality * this.gelatinization,
+        0.08,
+        1.0
+      );
+    }
+  }
+
+  _updateHotPourCommentary() {
+    const thickness = this.getCookedThickness();
+    if (this.catchFlashTimer > 0.4) {
+      this._setCommentary('IT’S CATCHING!! Stop pouring at the right body & STIR BRISKLY in circles!', 'urgent');
+    } else if (this.gelatinization >= 0.78) {
+      if (this.isPouring && thickness < 0.78) {
+        this._setCommentary('STOP POURING!! You’re drowning the pap with too much water!', 'urgent');
+      } else if (this.curdiness > 0.18) {
+        this._setCommentary('Whip fast circles right now to smooth out every curd before it sets!', 'urgent');
+      } else if (thickness > 1.32) {
+        this._setCommentary('Thick like agidi! Add a tiny splash of hot water + brisk stir, or serve thick!', 'warn');
+      } else if (this.glossiness > 0.72 && this.curdiness < 0.08) {
+        this._setCommentary('Chai!! Look at that glossy, silky velvet shine! Ready to serve!', 'good');
+      }
+    } else if (this.hotWaterMl > 155 && !this.isPouring && this.bowlTempC < 71.2 && this.timeSinceLastHotPour > 1.5) {
+      this._setCommentary(
+        `Uh-oh... bowl stalled at ${Math.round(this.bowlTempC)}°C and refuses to thicken!`,
+        'warn'
+      );
+    }
+  }
+
+  _stepStoveRescuePhase(dt) {
+    // Direct gas burner heats the pot from underneath & boils off excess water slowly
+    this.bowlTempC = Math.min(88, this.bowlTempC + dt * 3.4);
+    const totalWater = this.coldWaterMl + this.hotWaterMl;
+    if (totalWater > 272) {
+      const evap = Math.min(totalWater - 272, dt * 8.0);
+      this.hotWaterMl = Math.max(0, this.hotWaterMl - evap);
+    }
+
+    // Re-open plasticity slightly in hot pot so player can stir it smooth
+    this.plasticityWindow = Math.max(this.plasticityWindow, 0.75);
+    this._stepGelatinizationAndCurds(dt);
+
+    // Scorch hazard on bottom of pot if player stops stirring wide circles!
+    const scrapeCooling = this.circularStirQuality * 0.98 + clamp(this.linearStirSpeed / 2.5, 0, 0.35);
+    this.scorchRisk = clamp(this.scorchRisk + (0.35 - scrapeCooling) * dt, 0, 1);
+
+    if (this.scorchRisk >= 0.96) {
+      this.scorchAmount = clamp(this.scorchAmount + dt * 0.20, 0, 1);
+      this._setCommentary('🔥 BOTTOM IS BURNING! Stir faster around the pot or take it off heat!', 'urgent');
+    } else if (this.gelatinization >= 0.88 && this.curdiness < 0.12) {
+      this._setCommentary('Pap has thickened smoothly in the pot! Take it off the flame now!', 'good');
+    } else if (this.scorchRisk > 0.65) {
+      this._setCommentary('Keep that spoon moving! Pot bottom is getting super hot!', 'warn');
+    }
+  }
+
+  _stepToppingsPhase(dt) {
+    // Evaporated milk pouring
+    if (this.isPouring && this.milkMl < 55) {
+      this.pourStreamProgress = Math.min(1, this.pourStreamProgress + dt * 8);
+      this.milkMl = Math.min(55, this.milkMl + dt * 22);
+      if (Math.random() < dt * 28 && this.milkDrops.length < 95) {
+        const t = this.elapsed * 2.1;
+        this.milkDrops.push({
+          r: 0.18 + 0.32 * (0.5 + 0.5 * Math.sin(t * 0.7)),
+          theta: t,
+          size: 0.045 + Math.random() * 0.035,
+          stretch: 0.15
+        });
+      }
+    } else {
+      this.pourStreamProgress = Math.max(0, this.pourStreamProgress - dt * 8);
+    }
+
+    // Animate sinking sugar cubes
+    const sinkRate = clamp(1.2 - this.getCookedThickness() * 0.65, 0.25, 1.1);
+    for (const cube of this.sugarCubes) {
+      cube.sinkProgress = Math.min(1, cube.sinkProgress + dt * 0.45 * sinkRate);
+    }
+  }
+
+  /**
+   * Produces an immutable-style snapshot consumed by ANY renderer (Canvas2D or future Three.js 3D).
+   */
+  getRenderSnapshot() {
+    return {
+      phase: this.phase,
+      elapsed: this.elapsed,
+      phaseTime: this.phaseTime,
+      variety: this.getVariety(),
+      varietyId: this.varietyId,
+      coldWaterMl: this.coldWaterMl,
+      hotWaterMl: this.hotWaterMl,
+      milkMl: this.milkMl,
+      totalVolumeMl: this.getTotalVolumeMl(),
+      maxBowlVolumeMl: this.maxBowlVolumeMl,
+      fillFraction: clamp(this.getTotalVolumeMl() / this.maxBowlVolumeMl, 0.18, 1),
+      bowlTempC: this.bowlTempC,
+      kettleTempC: this.kettleTempC,
+      kettleBurnerOn: this.kettleBurnerOn,
+      lumps: this.lumps,
+      lumpFraction: this.getLumpFraction(),
+      cakedBottomLoss: this.cakedBottomLoss,
+      settledFraction: this.settledFraction,
+      gelatinization: this.gelatinization,
+      curdiness: this.curdiness,
+      glossiness: this.glossiness,
+      cookedThickness: this.getCookedThickness(),
+      catchTriggered: this.catchTriggered,
+      catchFlashTimer: this.catchFlashTimer,
+      scorchRisk: this.scorchRisk,
+      scorchAmount: this.scorchAmount,
+      usedStoveRescue: this.usedStoveRescue,
+      acceptedWateryPap: this.acceptedWateryPap,
+      spoon: { ...this.spoon },
+      linearStirSpeed: this.linearStirSpeed,
+      angularVelocity: this.angularVelocity,
+      circularStirQuality: this.circularStirQuality,
+      swirlRings: this.swirlRings,
+      swirlOmega: this.swirlOmega,
+      isPouring: this.isPouring,
+      pourStreamProgress: this.pourStreamProgress,
+      milkDrops: this.milkDrops,
+      sweetenerId: this.sweetenerId,
+      sugarCubes: this.sugarCubes,
+      honeyDrizzle: this.honeyDrizzle,
+      sideId: this.sideId,
+      commentary: this.commentary
+    };
+  }
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * clamp(t, 0, 1);
+}
+
+__exports.SWIRL_RINGS = SWIRL_RINGS;
+__exports.PapSimulation = PapSimulation;
+  },
+  'src/simulation/evaluator.js': function(__exports, __require) {
+const {  SIDES  } = __require('src/config/papVarieties.js');
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+/**
+ * Evaluates a completed bowl of pap and returns scores, Nigerian kitchen rank,
+ * diagnostic breakdown, and playful Aunty commentary.
+ */
+function evaluatePapBowl(snapshot) {
+  const {
+    gelatinization,
+    cookedThickness,
+    lumpFraction,
+    cakedBottomLoss = 0,
+    curdiness,
+    glossiness,
+    coldWaterMl,
+    hotWaterMl,
+    usedStoveRescue,
+    acceptedWateryPap,
+    scorchAmount,
+    variety,
+    sideId
+  } = snapshot;
+
+  // 1. Body & Consistency Score (0..100)
+  // Ideal cookedThickness is ~0.88 - 1.15 with gelatinization >= 0.90
+  let bodyScore = 0;
+  if (gelatinization < 0.45) {
+    bodyScore = Math.round(gelatinization * 48); // Uncooked / watery
+  } else {
+    const gelFactor = clamp((gelatinization - 0.35) / 0.60, 0, 1);
+    let thicknessPenalty = 0;
+    if (cookedThickness < 0.88) {
+      // Too runny / over-poured hot water
+      thicknessPenalty = Math.pow((0.88 - cookedThickness) / 0.34, 1.35) * 72;
+    } else if (cookedThickness > 1.16) {
+      // Too stiff (approaching agidi/eko!)
+      thicknessPenalty = Math.pow((cookedThickness - 1.16) / 0.48, 1.3) * 58;
+    }
+    bodyScore = Math.round(clamp(100 * gelFactor - thicknessPenalty, 5, 100));
+  }
+
+  // 2. Smoothness Score (0..100) — penalizes raw lumps AND un-sheared curds
+  const rawLumpPenalty = clamp(lumpFraction * 260, 0, 92);
+  const curdPenalty = clamp(curdiness * 135, 0, 72);
+  const scorchClumpPenalty = clamp(scorchAmount * 65, 0, 50);
+  const smoothnessScore = Math.round(clamp(100 - rawLumpPenalty - curdPenalty - scorchClumpPenalty, 0, 100));
+
+  // 3. Velvet Gloss Score (0..100)
+  const rawGloss = gelatinization < 0.4
+    ? glossiness * 30
+    : clamp(((glossiness - 0.08) / 0.76) * 100, 10, 100);
+  const glossScore = Math.round(clamp(rawGloss * (1 - scorchAmount * 0.4), 0, 100));
+
+  // 4. Technique Purity Score (0..100)
+  let techniqueScore = 100;
+  if (coldWaterMl < 26) techniqueScore -= (26 - coldWaterMl) * 1.4;
+  if (coldWaterMl > 68) techniqueScore -= Math.min(45, (coldWaterMl - 68) * 0.9);
+  if (usedStoveRescue) techniqueScore -= 16;
+  if (scorchAmount > 0.05) techniqueScore -= scorchAmount * 55;
+  if (acceptedWateryPap) techniqueScore = Math.min(techniqueScore, 32);
+  techniqueScore = Math.round(clamp(techniqueScore, 8, 100));
+
+  // Weighted Total Score
+  let totalScore = Math.round(
+    bodyScore * 0.36 +
+    smoothnessScore * 0.32 +
+    glossScore * 0.17 +
+    techniqueScore * 0.15
+  );
+
+  if (acceptedWateryPap) {
+    totalScore = Math.min(totalScore, 36);
+  }
+
+  // Determine Rank Title, Badge & Aunty Verdict
+  const sideObj = SIDES.find((s) => s.id === sideId) || SIDES[0];
+  let title = '';
+  let badge = '';
+  let verdict = '';
+
+  if (acceptedWateryPap || gelatinization < 0.42) {
+    title = 'ORDINARY CORN WATER';
+    badge = '🥛 Grab a Straw';
+    verdict = `You proudly served warm ${variety.name.toLowerCase()} milk with ${sideObj.name.toLowerCase()}! No spoon needed—just tilt the bowl and drink am with chest.`;
+  } else if (scorchAmount > 0.32) {
+    title = 'SMOKY JOLLOF PAP';
+    badge = '💨 Bottom Pot Flavor';
+    verdict = `The pap thickened in the pot o, before party-jollof firewood smoke entered from the bottom! Keep stirring wide circles on the stove next time.`;
+  } else if (cakedBottomLoss > 0.15) {
+    title = 'CAKED BOTTOM SURPRISE';
+    badge = '⚓ Forgot the Wake-Up Stir';
+    verdict = `You mixed the cold slurry nicely, then left it sitting until the starch settled—so hot water cooked heavy clumps right at the bottom!`;
+  } else if (lumpFraction > 0.18) {
+    title = 'PEBBLE BEACH AKAMU';
+    badge = '🪨 Surprise Crunchy Seeds';
+    verdict = `Every spoonful has little raw starch dumplings hiding inside! Next time, mash all lumps out completely in cool water before pouring hot water.`;
+  } else if (cookedThickness > 1.38) {
+    title = 'ACCIDENTAL AGIDI / EKO';
+    badge = '🧱 Spoon Standing Attention';
+    verdict = `Ah! This one pass pap—your spoon is standing straight up! Fetch banana leaf and wrap am, you just made solid eko.`;
+  } else if (cookedThickness < 0.62) {
+    title = 'LIGHT DRINKING PAP';
+    badge = '🌊 Extra Runny';
+    verdict = `It cooked through, before excess hot water drowned the thickness! Release Spacebar the very moment you see it catching.`;
+  } else if (usedStoveRescue && totalScore >= 74) {
+    title = 'NO-SHAME STOVE SAVIOR';
+    badge = '🔥 Pot-Rescued Perfection';
+    verdict = `What happens between you and the saucepan stays in the kitchen! Nobody in the dining room will ever know—the pap came out thick and smooth!`;
+  } else if (totalScore >= 92 && !usedStoveRescue) {
+    title = 'MAMA PUT CERTIFIED';
+    badge = '👑 100% Velvet Mastery';
+    verdict = `Chai!! Mirror shine, zero seeds, silky ribbon pull! Even the strictest Nigerian grandmother is nodding quietly over her ${sideObj.name.toLowerCase()}.`;
+  } else if (totalScore >= 80) {
+    title = 'SUNDAY MORNING SPECIAL';
+    badge = '✨ Thick & Comforting';
+    verdict = `Smooth, warm, glossy ${variety.name} worthy of a proper weekend breakfast beside sizzling ${sideObj.name.toLowerCase()}!`;
+  } else if (curdiness > 0.22) {
+    title = 'PATCHY CURDLED BOWL';
+    badge = '🌀 Needed Brisker Stir';
+    verdict = `Your water timing was close, before slow stirring let jelly curds set! Whip fast circles right as it catches to shear it silky smooth.`;
+  } else {
+    title = 'MANAGEABLE BREAKFAST';
+    badge = '👍 Milk Will Cover Your Sins';
+    verdict = `Not bad at all! Small texture hiccups here and there, nothing a generous swirl of evaporated milk and ${sideObj.name.toLowerCase()} won't fix.`;
+  }
+
+  // Diagnostic Coaching Tips
+  const tips = [];
+  if (coldWaterMl < 28) {
+    tips.push(`Cool slurry had very little water (${Math.round(coldWaterMl)} mL)—aim for ~40–55 mL so raw lumps dissolve smoothly.`);
+  } else if (coldWaterMl > 72) {
+    tips.push(`Too much cool water (${Math.round(coldWaterMl)} mL) cooled down the bowl! Keep cool slurry around ~40–55 mL.`);
+  } else {
+    tips.push(`Spot-on cool water ratio (${Math.round(coldWaterMl)} mL) for a heavy-cream slurry!`);
+  }
+
+  if (!acceptedWateryPap && gelatinization >= 0.75) {
+    if (cookedThickness >= 0.86 && cookedThickness <= 1.18) {
+      tips.push(`Great hot-water cutoff (${Math.round(hotWaterMl)} mL)—caught right at spoonable velvety thickness.`);
+    } else if (cookedThickness < 0.86) {
+      tips.push(`Poured slightly too much hot water (${Math.round(hotWaterMl)} mL) past the catch—release Spacebar sooner!`);
+    } else {
+      tips.push(`Stopped hot water slightly early (${Math.round(hotWaterMl)} mL), making a extra-heavy bowl.`);
+    }
+  }
+
+  if (curdiness > 0.14 && gelatinization >= 0.5) {
+    tips.push(`Stir faster in wide circles during the 4 seconds right as it thickens to polish out curds.`);
+  } else if (glossScore >= 85 && smoothnessScore >= 88) {
+    tips.push(`Elite wrist work—brisk circular stirring gave it zero lumps and a glossy sheen!`);
+  }
+
+  return {
+    totalScore,
+    title,
+    badge,
+    verdict,
+    metrics: [
+      { label: 'Body & Thickness', score: bodyScore },
+      { label: 'Silky Smoothness', score: smoothnessScore },
+      { label: 'Velvet Gloss', score: glossScore },
+      { label: 'Kitchen Technique', score: techniqueScore }
+    ],
+    tips
+  };
+}
+
+__exports.evaluatePapBowl = evaluatePapBowl;
+  },
+  'src/render/canvas2dRenderer.js': function(__exports, __require) {
+const {  PapRendererBase  } = __require('src/render/rendererInterface.js');
+const {  SWIRL_RINGS  } = __require('src/simulation/papSimulation.js');
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);
+
+function mixRgb(c1, c2, t) {
+  const k = clamp(t, 0, 1);
+  return [
+    Math.round(lerp(c1[0], c2[0], k)),
+    Math.round(lerp(c1[1], c2[1], k)),
+    Math.round(lerp(c1[2], c2[2], k))
+  ];
+}
+
+function rgbStr(c, alpha = 1) {
+  return alpha >= 0.999
+    ? `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+    : `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${alpha.toFixed(3)})`;
+}
+class Canvas2DRenderer extends PapRendererBase {
+  constructor() {
+    super();
+    this.canvas = null;
+    this.ctx = null;
+    this.width = 800;
+    this.height = 600;
+    this.dpr = 1;
+
+    // Computed bowl geometry in CSS pixels (used by screenToBowlCoords)
+    this.bowlCx = 400;
+    this.bowlCy = 320;
+    this.bowlInnerRadius = 170;
+    this._lastPhase = 'SELECT';
+
+    // Decorative steam & splash particles
+    this.steamParticles = [];
+    this.spoonTrail = [];
+  }
+
+  init(mountEl) {
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'pap-game-canvas';
+    mountEl.innerHTML = '';
+    mountEl.appendChild(this.canvas);
+    this.ctx = this.canvas.getContext('2d');
+    this.resize(mountEl.clientWidth || window.innerWidth, mountEl.clientHeight || window.innerHeight);
+  }
+
+  resize(width, height) {
+    if (!this.canvas) return;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.width = Math.max(260, width);
+    this.height = Math.max(260, height);
+    this.canvas.width = Math.round(this.width * this.dpr);
+    this.canvas.height = Math.round(this.height * this.dpr);
+    this.canvas.style.width = `${this.width}px`;
+    this.canvas.style.height = `${this.height}px`;
+
+    this._computeLayout(this._lastPhase);
+  }
+
+  _computeLayout(phase = this._lastPhase) {
+    const isShortLandscape = this.height <= 520 && this.width > this.height;
+    const isCompactMobile = this.width <= 760 && !isShortLandscape;
+
+    if (isCompactMobile) {
+      // Reserve clean breathing room for the top HUD strip & bottom thumb dock
+      const topInset = Math.min(156, this.height * 0.22);
+      const bottomInset = phase === 'TOPPINGS'
+        ? Math.min(168, this.height * 0.25)
+        : Math.min(88, this.height * 0.135);
+      const availH = Math.max(200, this.height - topInset - bottomInset);
+
+      this.bowlCx = this.width * 0.5;
+      this.bowlCy = topInset + availH * 0.52;
+      this.bowlInnerRadius = clamp(Math.min(this.width * 0.345, availH * 0.355), 94, 178);
+      return;
+    }
+
+    if (isShortLandscape) {
+      const topInset = 76;
+      const bottomInset = phase === 'TOPPINGS' ? 96 : 58;
+      const availH = Math.max(165, this.height - topInset - bottomInset);
+
+      this.bowlCx = (phase === 'TOPPINGS' || phase === 'RESULTS') ? this.width * 0.42 : this.width * 0.48;
+      this.bowlCy = topInset + availH * 0.5;
+      this.bowlInnerRadius = clamp(Math.min(this.width * 0.24, availH * 0.39), 76, 145);
+      return;
+    }
+
+    const minDim = Math.min(this.width, this.height);
+    this.bowlCx = (phase === 'TOPPINGS' || phase === 'RESULTS') ? this.width * 0.43 : this.width * 0.5;
+    this.bowlCy = this.height * 0.50;
+    this.bowlInnerRadius = clamp(minDim * 0.29, 112, 215);
+  }
+
+  screenToBowlCoords(clientX, clientY) {
+    if (!this.canvas) return { x: 0, y: 0, inBowl: false };
+    const rect = this.canvas.getBoundingClientRect();
+    const px = clientX - rect.left;
+    const py = clientY - rect.top;
+    const nx = (px - this.bowlCx) / this.bowlInnerRadius;
+    const ny = (py - this.bowlCy) / this.bowlInnerRadius;
+    const dist = Math.hypot(nx, ny);
+    return {
+      x: nx,
+      y: ny,
+      inBowl: dist <= 1.18
+    };
+  }
+
+  render(snapshot, dt) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.scale(this.dpr, this.dpr);
+
+    this._lastPhase = snapshot.phase;
+    this._computeLayout(snapshot.phase);
+
+    // 1. Kitchen Counter & Backsplash
+    this._drawKitchenBackdrop(ctx, snapshot);
+
+    // 2. Side Stove & Kettle (left side)
+    this._drawSideStoveAndKettle(ctx, snapshot);
+
+    // 3. Companion Side Dish Plate (right side in TOPPINGS & RESULTS)
+    if (snapshot.phase === 'TOPPINGS' || snapshot.phase === 'RESULTS') {
+      this._drawSideDishPlate(ctx, snapshot);
+    }
+
+    // 4. Woven Raffia Mat & Main Vessel (Enamel Bowl OR Aluminum Saucepan in STOVE_RESCUE)
+    if (snapshot.phase === 'STOVE_RESCUE') {
+      this._drawRescueStoveUnderBowl(ctx, snapshot);
+      this._drawAluminumPot(ctx, snapshot);
+    } else {
+      this._drawRaffiaMat(ctx);
+      this._drawEnamelBowl(ctx, snapshot);
+    }
+
+    // 5. Pap Fluid, Lumps, Swirls, Curds & Toppings inside Vessel
+    this._drawPapContents(ctx, snapshot, dt);
+
+    // 6. Brisk Stir Velocity Ring Feedback
+    this._drawStirFeedbackRing(ctx, snapshot);
+
+    // 7. Spoon inside Bowl
+    if (snapshot.phase !== 'SELECT' && snapshot.phase !== 'RESULTS') {
+      this._drawSpoon(ctx, snapshot, dt);
+    }
+
+    // 8. Pouring Vessel & Liquid Stream (Cool Cup / Boiling Kettle / Evaporated Milk Tin)
+    this._drawPouringAction(ctx, snapshot);
+
+    // 9. Rising Steam Wisps
+    this._updateAndDrawSteam(ctx, snapshot, dt);
+
+    ctx.restore();
+  }
+
+  _drawKitchenBackdrop(ctx, snapshot) {
+    // Warm sunlit wood countertop gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, this.height);
+    bgGrad.addColorStop(0, '#f5e6cf');
+    bgGrad.addColorStop(0.22, '#ebd2b0');
+    bgGrad.addColorStop(1, '#d5ad80');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Subtle wood grain lines
+    ctx.strokeStyle = 'rgba(138, 88, 42, 0.08)';
+    ctx.lineWidth = 1.5;
+    for (let y = Math.round(this.height * 0.2); y < this.height; y += 34) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.bezierCurveTo(
+        this.width * 0.33, y + 5,
+        this.width * 0.66, y - 5,
+        this.width, y + 2
+      );
+      ctx.stroke();
+    }
+
+    // Decorative terracotta & cream tile strip along top
+    const tileH = Math.min(82, this.height * 0.13);
+    ctx.fillStyle = '#fdf7ec';
+    ctx.fillRect(0, 0, this.width, tileH);
+
+    const tileSize = 48;
+    for (let x = 0; x < this.width + tileSize; x += tileSize) {
+      ctx.strokeStyle = 'rgba(186, 118, 68, 0.22)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, 0, tileSize, tileH);
+
+      // Subtle diamond motif
+      ctx.fillStyle = (Math.floor(x / tileSize) % 2 === 0)
+        ? 'rgba(209, 102, 47, 0.14)'
+        : 'rgba(42, 123, 98, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(x + tileSize * 0.5, tileH * 0.24);
+      ctx.lineTo(x + tileSize * 0.72, tileH * 0.5);
+      ctx.lineTo(x + tileSize * 0.5, tileH * 0.76);
+      ctx.lineTo(x + tileSize * 0.28, tileH * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Counter ledge trim
+    ctx.fillStyle = '#c48a53';
+    ctx.fillRect(0, tileH, this.width, 6);
+
+    // Morning sunbeam diagonal glow
+    const sunGrad = ctx.createRadialGradient(
+      this.width * 0.18, tileH, 20,
+      this.width * 0.35, this.height * 0.45, this.width * 0.65
+    );
+    sunGrad.addColorStop(0, 'rgba(255, 248, 224, 0.38)');
+    sunGrad.addColorStop(1, 'rgba(255, 248, 224, 0)');
+    ctx.fillStyle = sunGrad;
+    ctx.fillRect(0, 0, this.width, this.height);
+  }
+
+  _drawSideStoveAndKettle(ctx, snapshot) {
+    if (this.width < 580 && snapshot.phase !== 'SLURRY') return;
+
+    const isCompact = this.width <= 760 && this.height > this.width;
+    const grateR = clamp(this.bowlInnerRadius * (isCompact ? 0.31 : 0.36), 34, 68);
+    const stoveX = isCompact
+      ? Math.max(54, this.bowlCx - this.bowlInnerRadius * 0.92)
+      : Math.max(95, this.bowlCx - this.bowlInnerRadius * 1.65);
+    const stoveY = isCompact
+      ? Math.max(176, this.bowlCy - this.bowlInnerRadius * 1.06)
+      : this.bowlCy - this.bowlInnerRadius * 0.38;
+
+    // Cast-iron burner ring
+    ctx.save();
+    ctx.translate(stoveX, stoveY);
+    ctx.fillStyle = '#2d2a27';
+    ctx.beginPath();
+    ctx.arc(0, 0, grateR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#47423d';
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * grateR * 0.3, Math.sin(a) * grateR * 0.3);
+      ctx.lineTo(Math.cos(a) * grateR * 0.96, Math.sin(a) * grateR * 0.96);
+      ctx.stroke();
+    }
+
+    // Blue gas flames if kettle burner is on!
+    if (snapshot.kettleBurnerOn && snapshot.phase !== 'STOVE_RESCUE') {
+      const flicker = Math.sin(snapshot.elapsed * 26) * 2.5;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const fr = grateR * 0.62 + (i % 2) * 3;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(56, 189, 248, 0.85)' : 'rgba(96, 165, 250, 0.7)';
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * fr, Math.sin(a) * fr, 5.5 + flicker * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Show Kettle resting on burner during SLURRY or when re-boiling
+    const kettleOnStove = snapshot.phase === 'SLURRY' || snapshot.kettleBurnerOn || snapshot.phase === 'SELECT';
+    if (kettleOnStove && snapshot.phase !== 'STOVE_RESCUE') {
+      const rattleX = snapshot.kettleTempC >= 99.4 ? Math.sin(snapshot.elapsed * 42) * 1.6 : 0;
+      const rattleY = snapshot.kettleTempC >= 99.4 ? Math.cos(snapshot.elapsed * 37) * 1.2 : 0;
+      this._drawKettleGraphic(ctx, rattleX, rattleY - 6, grateR * 0.92, 0, snapshot.kettleTempC >= 96);
+    }
+
+    ctx.restore();
+  }
+
+  _drawKettleGraphic(ctx, x, y, radius, tiltRad = 0, steaming = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tiltRad);
+
+    // Shadow
+    ctx.fillStyle = 'rgba(45, 30, 15, 0.22)';
+    ctx.beginPath();
+    ctx.ellipse(3, 8, radius * 0.95, radius * 0.82, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spout pointing toward bowl (right or bottom-left depending on orientation)
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = radius * 0.26;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(radius * 0.55, -radius * 0.1);
+    ctx.lineTo(radius * 1.08, -radius * 0.32);
+    ctx.stroke();
+
+    // Stainless dome body
+    const bodyGrad = ctx.createRadialGradient(-radius * 0.28, -radius * 0.28, radius * 0.1, 0, 0, radius);
+    bodyGrad.addColorStop(0, '#f8fafc');
+    bodyGrad.addColorStop(0.55, '#cbd5e1');
+    bodyGrad.addColorStop(1, '#64748b');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.88, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Kettle lid & black knob
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.44, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+
+    // arched handle
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = radius * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.55, -radius * 0.45);
+    ctx.quadraticCurveTo(0, -radius * 0.85, radius * 0.45, -radius * 0.45);
+    ctx.stroke();
+
+    if (steaming) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.beginPath();
+      ctx.arc(radius * 1.18, -radius * 0.4, radius * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  _drawRaffiaMat(ctx) {
+    const matR = this.bowlInnerRadius * 1.24;
+    ctx.save();
+    ctx.translate(this.bowlCx, this.bowlCy);
+
+    // Drop shadow
+    ctx.fillStyle = 'rgba(72, 42, 14, 0.24)';
+    ctx.beginPath();
+    ctx.arc(5, 10, matR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Woven straw base
+    ctx.fillStyle = '#d9a962';
+    ctx.beginPath();
+    ctx.arc(0, 0, matR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Colorful Nigerian raffia trim rings
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, matR * 0.94, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 8]);
+    ctx.beginPath();
+    ctx.arc(0, 0, matR * 0.88, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.restore();
+  }
+
+  _drawEnamelBowl(ctx, snapshot) {
+    const cx = this.bowlCx;
+    const cy = this.bowlCy;
+    const outerR = this.bowlInnerRadius * 1.13;
+    const innerR = this.bowlInnerRadius;
+
+    // Subtle catch shudder!
+    const shake = snapshot.catchFlashTimer > 0.8
+      ? Math.sin(snapshot.elapsed * 55) * 2.2 * (snapshot.catchFlashTimer - 0.8)
+      : 0;
+
+    ctx.save();
+    ctx.translate(cx + shake, cy);
+
+    // Bowl shadow on mat
+    ctx.fillStyle = 'rgba(42, 26, 10, 0.28)';
+    ctx.beginPath();
+    ctx.arc(6, 12, outerR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer enamel rim (classic cream + deep emerald green Nigerian enamelware band)
+    const rimGrad = ctx.createLinearGradient(-outerR, -outerR, outerR, outerR);
+    rimGrad.addColorStop(0, '#ffffff');
+    rimGrad.addColorStop(0.6, '#f4efe4');
+    rimGrad.addColorStop(1, '#dcd3c0');
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Classic green enamel trim line
+    ctx.strokeStyle = '#0f766e';
+    ctx.lineWidth = Math.max(4, outerR * 0.032);
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR * 0.965, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR * 0.92, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Bowl interior cavity shading
+    const cavityGrad = ctx.createRadialGradient(
+      -innerR * 0.2, -innerR * 0.2, innerR * 0.1,
+      0, 0, innerR
+    );
+    cavityGrad.addColorStop(0, '#faf6ed');
+    cavityGrad.addColorStop(0.78, '#efe8d8');
+    cavityGrad.addColorStop(1, '#cfc5b1');
+    ctx.fillStyle = cavityGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, innerR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  _drawRescueStoveUnderBowl(ctx, snapshot) {
+    const cx = this.bowlCx;
+    const cy = this.bowlCy;
+    const flameR = this.bowlInnerRadius * 1.18;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Dark stove burner base
+    ctx.fillStyle = '#1f1d1b';
+    ctx.beginPath();
+    ctx.arc(0, 0, flameR * 1.06, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dancing blue gas flames licking around the pot!
+    const tongues = 24;
+    for (let i = 0; i < tongues; i++) {
+      const a = (i / tongues) * Math.PI * 2 + snapshot.elapsed * 0.6;
+      const pulse = Math.sin(snapshot.elapsed * 28 + i * 1.7) * 7;
+      const rOut = flameR + pulse;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(56, 189, 248, 0.78)' : 'rgba(59, 130, 246, 0.62)';
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * (rOut * 0.94), Math.sin(a) * (rOut * 0.94), 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Scorch danger glow if bottom is overheating!
+    if (snapshot.scorchRisk > 0.35) {
+      const warnAlpha = clamp((snapshot.scorchRisk - 0.35) / 0.65, 0, 0.75);
+      ctx.strokeStyle = `rgba(239, 68, 68, ${warnAlpha.toFixed(3)})`;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(0, 0, flameR * 1.02, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  _drawAluminumPot(ctx) {
+    const cx = this.bowlCx;
+    const cy = this.bowlCy;
+    const outerR = this.bowlInnerRadius * 1.11;
+    const innerR = this.bowlInnerRadius;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Long pot handle on left
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.roundRect(-outerR * 1.68, -14, outerR * 0.66, 28, 10);
+    ctx.fill();
+
+    // Brushed aluminum rim
+    const potGrad = ctx.createLinearGradient(-outerR, -outerR, outerR, outerR);
+    potGrad.addColorStop(0, '#f1f5f9');
+    potGrad.addColorStop(0.5, '#94a3b8');
+    potGrad.addColorStop(1, '#475569');
+    ctx.fillStyle = potGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pot interior
+    const innerGrad = ctx.createRadialGradient(0, 0, innerR * 0.1, 0, 0, innerR);
+    innerGrad.addColorStop(0, '#e2e8f0');
+    innerGrad.addColorStop(1, '#94a3b8');
+    ctx.fillStyle = innerGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, innerR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  _drawPapContents(ctx, snapshot, dt) {
+    const cx = this.bowlCx;
+    const cy = this.bowlCy;
+    const R = this.bowlInnerRadius;
+    const v = snapshot.variety;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Clip to bowl interior
+    ctx.beginPath();
+    ctx.arc(0, 0, R * 0.985, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Liquid radius grows smoothly with total volume
+    const hasLiquid = snapshot.coldWaterMl > 1 || snapshot.hotWaterMl > 1;
+    const liquidR = hasLiquid
+      ? R * lerp(0.50, 0.94, smoothstep01((snapshot.totalVolumeMl - 90) / 335))
+      : R * 0.36;
+
+    if (hasLiquid) {
+      // Base color shifts from matte chalky slurry -> rich translucent cooked pap
+      const gel = snapshot.gelatinization;
+      let baseCol = mixRgb(v.slurryColor, v.cookedColor, gel);
+      let edgeCol = mixRgb(v.slurryColor, v.cookedDeepColor, gel);
+
+      // Darken slightly if scorched in pot
+      if (snapshot.scorchAmount > 0.01) {
+        baseCol = mixRgb(baseCol, [115, 72, 42], snapshot.scorchAmount * 0.55);
+        edgeCol = mixRgb(edgeCol, [82, 46, 24], snapshot.scorchAmount * 0.65);
+      }
+
+      // If watery / heavily settled, outer liquid looks translucent watery!
+      const settled = snapshot.settledFraction;
+      const thinWatery = gel < 0.25 && snapshot.coldWaterMl + snapshot.hotWaterMl > 95;
+      const outerAlpha = settled > 0.15
+        ? lerp(0.95, 0.48, settled)
+        : thinWatery ? 0.84 : 0.985;
+
+      const fluidGrad = ctx.createRadialGradient(
+        -liquidR * 0.18, -liquidR * 0.18, liquidR * 0.05,
+        0, 0, liquidR
+      );
+      fluidGrad.addColorStop(0, rgbStr(baseCol, 0.99));
+      fluidGrad.addColorStop(0.72, rgbStr(baseCol, lerp(0.99, outerAlpha, 0.6)));
+      fluidGrad.addColorStop(1, rgbStr(edgeCol, outerAlpha));
+
+      ctx.fillStyle = fluidGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, liquidR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Settled dense starch disk at bottom center if player stopped stirring!
+      if (settled > 0.08 && gel < 0.3) {
+        const diskR = liquidR * lerp(0.75, 0.52, settled);
+        ctx.fillStyle = rgbStr(v.rawChunkColor, settled * 0.85);
+        ctx.beginPath();
+        ctx.arc(0, 0, diskR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Concentric advected fluid swirl ribbons & velvety specular sheen!
+      this._drawSwirlRibbons(ctx, snapshot, liquidR);
+
+      // Patchy curds blooming during "The Catch" (sheared smooth by circular stirring!)
+      if (snapshot.curdiness > 0.03) {
+        this._drawGelatinizingCurds(ctx, snapshot, liquidR);
+      }
+
+      // Scorch specks if bottom burned during stove rescue
+      if (snapshot.scorchAmount > 0.06) {
+        this._drawScorchSpecks(ctx, snapshot, liquidR);
+      }
+
+      // Toppings: Evaporated Milk swirl, Honey drizzle, Sinking Sugar Cubes
+      this._drawToppingsInBowl(ctx, snapshot, liquidR);
+    }
+
+    // Raw or thermally-sealed Akamu Lumps!
+    this._drawLumps(ctx, snapshot, R);
+
+    // Subtle inner rim meniscus shadow
+    const rimShadow = ctx.createRadialGradient(0, 0, liquidR * 0.85, 0, 0, liquidR);
+    rimShadow.addColorStop(0, 'rgba(0,0,0,0)');
+    rimShadow.addColorStop(1, 'rgba(65, 45, 25, 0.14)');
+    ctx.fillStyle = rimShadow;
+    ctx.beginPath();
+    ctx.arc(0, 0, liquidR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  _drawSwirlRibbons(ctx, snapshot, liquidR) {
+    const v = snapshot.variety;
+    const gel = snapshot.gelatinization;
+    const gloss = snapshot.glossiness;
+    const thickness = snapshot.cookedThickness;
+
+    for (let i = 1; i < SWIRL_RINGS; i++) {
+      const rNorm = (i + 0.3) / SWIRL_RINGS;
+      const rPx = rNorm * liquidR * 0.94;
+      const baseAngle = snapshot.swirlRings[i];
+
+      if (gel < 0.3) {
+        // Thin slurry / water ripples when moving
+        const speedAlpha = clamp(Math.abs(snapshot.swirlOmega[i]) * 0.06, 0.03, 0.24);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${speedAlpha.toFixed(3)})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(0, 0, rPx, baseAngle, baseAngle + Math.PI * 0.85);
+        ctx.stroke();
+      } else {
+        // Plush cooked custard ridges + glossy window-light sheen!
+        const ridgeCol = mixRgb(v.cookedColor, v.cookedDeepColor, 0.55);
+        const ridgeWidth = lerp(2.5, 9.5, clamp(thickness * 0.75, 0, 1));
+        ctx.strokeStyle = rgbStr(ridgeCol, 0.24 * gel);
+        ctx.lineWidth = ridgeWidth;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(0, 0, rPx, baseAngle, baseAngle + Math.PI * 1.15);
+        ctx.stroke();
+
+        // Glossy velvety highlight arcs (catch morning light on top-left!)
+        if (gloss > 0.12 && i % 2 === 1) {
+          const sheenAlpha = clamp(gloss * gel * 0.52, 0.06, 0.52);
+          ctx.strokeStyle = rgbStr(v.specularTint, sheenAlpha);
+          ctx.lineWidth = ridgeWidth * 0.52;
+          const lightAngle = -Math.PI * 0.72 + Math.sin(baseAngle) * 0.22;
+          ctx.beginPath();
+          ctx.arc(0, 0, rPx - 2, lightAngle, lightAngle + Math.PI * 0.48);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  _drawGelatinizingCurds(ctx, snapshot, liquidR) {
+    const curdAmt = snapshot.curdiness;
+    const v = snapshot.variety;
+    const count = Math.round(18 * curdAmt + 4);
+
+    for (let i = 0; i < count; i++) {
+      const ringIdx = (i * 3 + 2) % SWIRL_RINGS;
+      const rNorm = 0.15 + ((i * 0.37) % 0.74);
+      const theta = snapshot.swirlRings[ringIdx] + i * 2.399;
+      const x = Math.cos(theta) * rNorm * liquidR;
+      const y = Math.sin(theta) * rNorm * liquidR;
+      const size = (6 + (i % 4) * 4) * (0.5 + 0.7 * curdAmt);
+      const stretch = 1 + Math.min(1.8, Math.abs(snapshot.swirlOmega[ringIdx]) * 0.12);
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(theta + Math.PI * 0.5);
+      ctx.fillStyle = rgbStr(v.curdTint, clamp(curdAmt * 0.78, 0.12, 0.72));
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * stretch, size * 0.68, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  _drawScorchSpecks(ctx, snapshot, liquidR) {
+    const count = Math.round(snapshot.scorchAmount * 28);
+    ctx.fillStyle = 'rgba(58, 30, 12, 0.75)';
+    for (let i = 0; i < count; i++) {
+      const ringIdx = i % SWIRL_RINGS;
+      const r = (0.14 + ((i * 0.29) % 0.75)) * liquidR;
+      const a = snapshot.swirlRings[ringIdx] + i * 1.91;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 2.2 + (i % 3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  _drawToppingsInBowl(ctx, snapshot, liquidR) {
+    // 1. Advected creamy Evaporated Milk swirl!
+    if (snapshot.milkDrops.length > 0) {
+      for (const drop of snapshot.milkDrops) {
+        const rPx = drop.r * liquidR;
+        const sizePx = drop.size * liquidR;
+        const arcLen = 0.22 + (drop.stretch || 0) * 0.45;
+        ctx.strokeStyle = 'rgba(255, 253, 245, 0.88)';
+        ctx.lineWidth = Math.max(3.5, sizePx * (1.1 - Math.min(0.55, (drop.stretch || 0) * 0.22)));
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(0, 0, rPx, drop.theta, drop.theta + arcLen);
+        ctx.stroke();
+      }
+    }
+
+    // 2. Pure Honey spiral drizzle
+    if (snapshot.honeyDrizzle > 0) {
+      ctx.strokeStyle = 'rgba(217, 119, 6, 0.78)';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let t = 0; t < Math.PI * 4.2; t += 0.15) {
+        const hr = (0.08 + (t / (Math.PI * 4.2)) * 0.56) * liquidR;
+        const a = t + snapshot.swirlRings[4] * 0.4;
+        const hx = Math.cos(a) * hr;
+        const hy = Math.sin(a) * hr;
+        if (t === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+      }
+      ctx.stroke();
+    }
+
+    // 3. Sugar cubes gently melting/sinking into the warm pap
+    for (const cube of snapshot.sugarCubes) {
+      const alpha = lerp(0.96, 0.32, cube.sinkProgress);
+      const scale = lerp(1.0, 0.72, cube.sinkProgress);
+      const sz = 16 * scale;
+      const cx = cube.x * liquidR;
+      const cy = cube.y * liquidR;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(0.28);
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+      ctx.strokeStyle = `rgba(203, 213, 225, ${alpha.toFixed(3)})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-sz * 0.5, -sz * 0.5, sz, sz, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  _drawLumps(ctx, snapshot, R) {
+    const v = snapshot.variety;
+    for (const lump of snapshot.lumps) {
+      const lx = lump.x * R;
+      const ly = lump.y * R;
+      const lr = lump.r * R;
+
+      ctx.save();
+      ctx.translate(lx, ly);
+
+      // Soft lump shadow
+      ctx.fillStyle = 'rgba(60, 42, 20, 0.18)';
+      ctx.beginPath();
+      ctx.arc(2.5, 3.5, lr, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crumbly organic polygon/lobed contour
+      ctx.fillStyle = rgbStr(v.rawChunkColor);
+      ctx.beginPath();
+      const lobes = 7;
+      for (let i = 0; i <= lobes; i++) {
+        const a = (i / lobes) * Math.PI * 2;
+        const wobble = 0.86 + 0.18 * Math.sin(a * 3 + lump.seed * 5);
+        const px = Math.cos(a) * lr * wobble;
+        const py = Math.sin(a) * lr * wobble;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Crumbly bevel shading
+      ctx.strokeStyle = rgbStr(v.rawShadowColor, 0.85);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // If thermally sealed by hot water, show translucent cooked outer shell!
+      if (lump.sealed) {
+        ctx.strokeStyle = 'rgba(255, 250, 235, 0.72)';
+        ctx.lineWidth = 3.2;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  _drawStirFeedbackRing(ctx, snapshot) {
+    if (snapshot.phase !== 'POUR_HOT' && snapshot.phase !== 'STOVE_RESCUE') return;
+    if (snapshot.circularStirQuality < 0.15) return;
+
+    const q = snapshot.circularStirQuality;
+    const outerR = this.bowlInnerRadius * 1.17;
+    ctx.save();
+    ctx.translate(this.bowlCx, this.bowlCy);
+    ctx.strokeStyle = q >= 0.62
+      ? `rgba(22, 163, 74, ${(0.28 + q * 0.45).toFixed(3)})`
+      : `rgba(217, 119, 6, ${(0.22 + q * 0.35).toFixed(3)})`;
+    ctx.lineWidth = 4.5;
+    ctx.setLineDash([18, 12]);
+    ctx.lineDashOffset = -snapshot.elapsed * (snapshot.angularVelocity >= 0 ? 90 : -90);
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  _drawSpoon(ctx, snapshot, dt) {
+    const sx = this.bowlCx + snapshot.spoon.x * this.bowlInnerRadius;
+    const sy = this.bowlCy + snapshot.spoon.y * this.bowlInnerRadius;
+    const sScale = clamp(this.bowlInnerRadius / 165, 0.74, 1.12);
+
+    // Maintain short motion wake trail
+    if (snapshot.spoon.inBowl && snapshot.linearStirSpeed > 0.25) {
+      this.spoonTrail.push({ x: sx, y: sy, life: 0.25 });
+    }
+    for (let i = this.spoonTrail.length - 1; i >= 0; i--) {
+      this.spoonTrail[i].life -= dt;
+      if (this.spoonTrail[i].life <= 0) this.spoonTrail.splice(i, 1);
+    }
+
+    if (this.spoonTrail.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+      ctx.lineWidth = 8 * sScale;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      this.spoonTrail.forEach((pt, idx) => {
+        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Subtle shear ripple halo outside fingertip so touch players clearly see spoon action
+    if (snapshot.spoon.inBowl && snapshot.linearStirSpeed > 0.22) {
+      const rippleAlpha = clamp((snapshot.linearStirSpeed - 0.22) * 0.14, 0.05, 0.24);
+      ctx.save();
+      ctx.strokeStyle = `rgba(255, 255, 255, ${rippleAlpha.toFixed(3)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, (26 + Math.sin(snapshot.elapsed * 22) * 3) * sScale, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Angle spoon handle naturally toward bottom-right hand grip
+    const handleAngle = 0.68 + snapshot.spoon.x * 0.18;
+    const spoonLen = this.bowlInnerRadius * 1.15;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(handleAngle);
+    ctx.scale(sScale, sScale);
+
+    // Shadow
+    ctx.fillStyle = 'rgba(30, 20, 10, 0.22)';
+    ctx.beginPath();
+    ctx.ellipse(4, 6, 22, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stainless spoon bowl
+    const bowlGrad = ctx.createLinearGradient(-20, -14, 20, 14);
+    bowlGrad.addColorStop(0, '#f8fafc');
+    bowlGrad.addColorStop(0.5, '#cbd5e1');
+    bowlGrad.addColorStop(1, '#64748b');
+    ctx.fillStyle = bowlGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 23, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Coating of pap on the spoon bowl!
+    if (snapshot.coldWaterMl > 5 || snapshot.hotWaterMl > 5) {
+      const coatCol = mixRgb(
+        snapshot.variety.slurryColor,
+        snapshot.variety.cookedColor,
+        snapshot.gelatinization
+      );
+      ctx.fillStyle = rgbStr(coatCol, 0.72);
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, 16, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Handle shaft
+    const scaledLen = spoonLen / sScale;
+    const shaftGrad = ctx.createLinearGradient(0, -5, 0, 5);
+    shaftGrad.addColorStop(0, '#f1f5f9');
+    shaftGrad.addColorStop(1, '#475569');
+    ctx.fillStyle = shaftGrad;
+    ctx.beginPath();
+    ctx.roundRect(18, -4.5, scaledLen, 9, 4.5);
+    ctx.fill();
+
+    // Wooden grip end
+    ctx.fillStyle = '#7c2d12';
+    ctx.beginPath();
+    ctx.roundRect(18 + scaledLen * 0.48, -6.5, scaledLen * 0.54, 13, 6.5);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  _drawPouringAction(ctx, snapshot) {
+    const p = snapshot.pourStreamProgress;
+    const cx = this.bowlCx;
+    const cy = this.bowlCy;
+    const R = this.bowlInnerRadius;
+
+    // Hovering Kettle ready in POUR_HOT even before pressing Space!
+    if (snapshot.phase === 'POUR_HOT' && !snapshot.kettleBurnerOn) {
+      const kx = cx - R * 0.92;
+      const ky = cy - R * 0.88;
+      const tilt = lerp(0.12, 0.54, p);
+
+      if (p > 0.04) {
+        const spoutX = kx + R * 0.42;
+        const spoutY = ky + R * 0.06;
+        const hitX = cx - R * 0.08;
+        const hitY = cy - R * 0.02;
+
+        // Steaming hot water parabolic stream
+        ctx.save();
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.82)';
+        ctx.lineWidth = lerp(3, 12, p);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(spoutX, spoutY);
+        ctx.quadraticCurveTo(
+          (spoutX + hitX) * 0.5 + 16,
+          spoutY + 18,
+          hitX,
+          hitY
+        );
+        ctx.stroke();
+
+        // Impact splash ring
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 2.2;
+        const rippleR = 8 + ((snapshot.elapsed * 42) % 18);
+        ctx.beginPath();
+        ctx.arc(hitX, hitY, rippleR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      this._drawKettleGraphic(ctx, kx, ky, R * 0.38, tilt, snapshot.kettleTempC >= 92);
+      return;
+    }
+
+    // Cool Water Cup pour in SLURRY
+    if (snapshot.phase === 'SLURRY' && p > 0.04) {
+      const cupX = cx - R * 0.86;
+      const cupY = cy - R * 0.84;
+      const hitX = cx - R * 0.1;
+      const hitY = cy - R * 0.05;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
+      ctx.lineWidth = lerp(2, 9, p);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cupX + 26, cupY + 10);
+      ctx.quadraticCurveTo((cupX + hitX) * 0.5 + 14, cupY + 18, hitX, hitY);
+      ctx.stroke();
+
+      // Blue plastic/enamel water cup
+      ctx.translate(cupX, cupY);
+      ctx.rotate(0.62);
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.roundRect(-22, -26, 44, 52, 6);
+      ctx.fill();
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(-18, -22, 36, 10);
+      ctx.restore();
+      return;
+    }
+
+    // Evaporated Milk Tin pour in TOPPINGS
+    if (snapshot.phase === 'TOPPINGS' && p > 0.04) {
+      const tinX = cx - R * 0.78;
+      const tinY = cy - R * 0.80;
+      const t = snapshot.elapsed * 2.1;
+      const hitX = cx + Math.cos(t) * R * 0.22;
+      const hitY = cy + Math.sin(t) * R * 0.22;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 252, 240, 0.94)';
+      ctx.lineWidth = lerp(2, 6.5, p);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tinX + 22, tinY + 14);
+      ctx.quadraticCurveTo((tinX + hitX) * 0.5 + 8, tinY + 20, hitX, hitY);
+      ctx.stroke();
+
+      // Classic Nigerian Evaporated Milk Tin (Blue, White & Gold label!)
+      ctx.translate(tinX, tinY);
+      ctx.rotate(0.72);
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.roundRect(-20, -28, 40, 56, 4);
+      ctx.fill();
+      ctx.fillStyle = '#1d4ed8';
+      ctx.fillRect(-20, -10, 40, 22);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-20, -13, 40, 3);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-20, -28, 40, 56);
+      ctx.restore();
+    }
+  }
+
+  _drawSideDishPlate(ctx, snapshot) {
+    const isShortLandscape = this.height <= 520 && this.width > this.height;
+    const isWide = this.width > 760 || isShortLandscape;
+    const plateR = isWide
+      ? clamp(this.bowlInnerRadius * 0.56, 54, 110)
+      : clamp(this.bowlInnerRadius * 0.38, 44, 56);
+    const plateCx = isWide
+      ? Math.min(this.width - plateR - 18, this.bowlCx + this.bowlInnerRadius * 1.92)
+      : Math.min(this.width - plateR - 12, this.bowlCx + this.bowlInnerRadius * 0.92);
+    const plateCy = isWide
+      ? this.bowlCy + 10
+      : Math.max(182, this.bowlCy - this.bowlInnerRadius * 1.04);
+
+    ctx.save();
+    ctx.translate(plateCx, plateCy);
+
+    // Shadow & Ceramic Side Plate
+    ctx.fillStyle = 'rgba(55, 32, 12, 0.24)';
+    ctx.beginPath();
+    ctx.arc(4, 8, plateR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fffbeb';
+    ctx.beginPath();
+    ctx.arc(0, 0, plateR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, plateR * 0.88, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (snapshot.sideId === 'akara') {
+      // 4 plump crispy golden Akara balls with red pepper flecks!
+      const spots = [
+        [-plateR * 0.28, -plateR * 0.22],
+        [plateR * 0.26, -plateR * 0.20],
+        [-plateR * 0.22, plateR * 0.26],
+        [plateR * 0.24, plateR * 0.24]
+      ];
+      spots.forEach(([ax, ay], idx) => {
+        const ar = plateR * 0.31;
+        const grad = ctx.createRadialGradient(ax - ar * 0.25, ay - ar * 0.25, 2, ax, ay, ar);
+        grad.addColorStop(0, '#f59e0b');
+        grad.addColorStop(0.7, '#d97706');
+        grad.addColorStop(1, '#92400e');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(ax, ay, ar * 1.08, ar * 0.9, idx * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ata rodo & onion specks
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(ax - 4, ay - 3, 3, 3);
+        ctx.fillRect(ax + 5, ay + 2, 2.5, 2.5);
+        ctx.fillStyle = '#7e22ce';
+        ctx.fillRect(ax + 1, ay - 6, 2.5, 2.5);
+      });
+    } else if (snapshot.sideId === 'moimoi') {
+      // Glossy green Ewe Eran leaf + rich coral Moi Moi + boiled egg slice!
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.ellipse(0, 2, plateR * 0.76, plateR * 0.62, -0.25, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.roundRect(-plateR * 0.48, -plateR * 0.38, plateR * 0.96, plateR * 0.76, 14);
+      ctx.fill();
+
+      // Boiled egg slice on top
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(4, -2, plateR * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(5, -2, plateR * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Sweet golden caramelized Dodo (fried plantain) slices!
+      const slices = [
+        [-plateR * 0.22, -plateR * 0.22, -0.35],
+        [plateR * 0.20, -plateR * 0.14, 0.25],
+        [-plateR * 0.12, plateR * 0.22, 0.15],
+        [plateR * 0.22, plateR * 0.24, -0.2]
+      ];
+      slices.forEach(([dx, dy, rot]) => {
+        ctx.save();
+        ctx.translate(dx, dy);
+        ctx.rotate(rot);
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, plateR * 0.36, plateR * 0.20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, plateR * 0.31, plateR * 0.16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    ctx.restore();
+  }
+
+  _updateAndDrawSteam(ctx, snapshot, dt) {
+    // Spawn gentle steam wisps from hot bowl (>60°C)
+    if (snapshot.bowlTempC > 58 && Math.random() < dt * ((snapshot.bowlTempC - 55) * 0.35)) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * this.bowlInnerRadius * 0.65;
+      const smoky = snapshot.scorchAmount > 0.15;
+      this.steamParticles.push({
+        x: this.bowlCx + Math.cos(angle) * dist,
+        y: this.bowlCy + Math.sin(angle) * dist * 0.6,
+        vy: -24 - Math.random() * 18,
+        r: 10 + Math.random() * 14,
+        life: 1.0,
+        smoky
+      });
+    }
+
+    for (let i = this.steamParticles.length - 1; i >= 0; i--) {
+      const p = this.steamParticles[i];
+      p.life -= dt * 0.55;
+      p.y += p.vy * dt;
+      p.x += Math.sin(snapshot.elapsed * 3 + i) * 12 * dt;
+      p.r += dt * 10;
+
+      if (p.life <= 0) {
+        this.steamParticles.splice(i, 1);
+        continue;
+      }
+
+      const alpha = Math.sin(p.life * Math.PI) * (p.smoky ? 0.28 : 0.20);
+      ctx.fillStyle = p.smoky
+        ? `rgba(87, 83, 78, ${alpha.toFixed(3)})`
+        : `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  dispose() {
+    if (this.canvas && this.canvas.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas);
+    }
+    this.canvas = null;
+    this.ctx = null;
+  }
+}
+
+function smoothstep01(x) {
+  const t = clamp(x, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+__exports.Canvas2DRenderer = Canvas2DRenderer;
+  },
+  'src/render/rendererInterface.js': function(__exports, __require) {
+/**
+ * Base Renderer Contract.
+ *
+ * Both `Canvas2DRenderer` (v1) and a future `WebGL3DRenderer` (Three.js v2)
+ * implement these exact 4 methods. Because `PapSimulation` operates purely in
+ * normalized bowl coordinates (x, y in [-1, 1], r <= 1), upgrading to 3D
+ * requires ZERO changes to physics, audio, scoring, or UI logic:
+ *   - 2D maps screen pointer -> (x - cx) / radius
+ *   - 3D maps screen pointer -> Raycaster intersection on the bowl liquid plane
+ */
+class PapRendererBase {
+  /**
+   * @param {HTMLElement} mountEl - Container element to attach canvas into
+   */
+  init(mountEl) {
+    throw new Error('init(mountEl) must be implemented by renderer subclass');
+  }
+
+  /**
+   * Handle viewport resize (DPR-aware)
+   * @param {number} width
+   * @param {number} height
+   */
+  resize(width, height) {}
+
+  /**
+   * Convert client screen coordinates into normalized bowl space [-1, 1].
+   * @param {number} clientX
+   * @param {number} clientY
+   * @returns {{ x: number, y: number, inBowl: boolean }}
+   */
+  screenToBowlCoords(clientX, clientY) {
+    return { x: 0, y: 0, inBowl: false };
+  }
+
+  /**
+   * Render a single frame from an immutable simulation snapshot.
+   * @param {object} snapshot - Output of `papSimulation.getRenderSnapshot()`
+   * @param {number} dt - Frame delta in seconds
+   */
+  render(snapshot, dt) {}
+
+  /**
+   * Clean up DOM nodes / WebGL contexts when switching renderers.
+   */
+  dispose() {}
+}
+
+__exports.PapRendererBase = PapRendererBase;
+  },
+  'src/input/inputController.js': function(__exports, __require) {
+/**
+ * Handles mouse, multi-touch, keyboard (Spacebar), and on-screen Pour button
+ * without pointer collisions (left thumb can hold Pour while right finger stirs!).
+ */
+class InputController {
+  /**
+   * @param {HTMLElement} canvasHost
+   * @param {import('../render/rendererInterface.js').PapRendererBase} renderer
+   */
+  constructor(canvasHost, renderer) {
+    this.canvasHost = canvasHost;
+    this.renderer = renderer;
+
+    this.pointerX = 0.25;
+    this.pointerY = 0.2;
+    this.pointerInBowl = false;
+    this.spoonPointerId = null;
+    this.pourPointerId = null;
+    this.touchStirringActive = false;
+    this.pourBtnEl = null;
+
+    this.isTouchDevice =
+      (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)')?.matches) ||
+      (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0);
+
+    this.keyPouring = false;
+    this.buttonPouring = false;
+    this.onUserGesture = null;
+
+    this._bindEvents();
+  }
+
+  setRenderer(renderer) {
+    this.renderer = renderer;
+  }
+
+  isTouchPrimary() {
+    return Boolean(this.isTouchDevice);
+  }
+
+  getState() {
+    return {
+      pointerX: this.pointerX,
+      pointerY: this.pointerY,
+      pointerInBowl: this.pointerInBowl,
+      isPouring: this.keyPouring || this.buttonPouring
+    };
+  }
+
+  bindPourButton(btnEl) {
+    if (!btnEl) return;
+    this.pourBtnEl = btnEl;
+
+    const startPour = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        this.isTouchDevice = true;
+      }
+      if (this.onUserGesture) this.onUserGesture();
+      if (this.pourPointerId !== null && this.pourPointerId !== e.pointerId) return;
+
+      this.pourPointerId = e.pointerId;
+      this.buttonPouring = true;
+      btnEl.classList.add('is-pressing');
+      try {
+        btnEl.setPointerCapture?.(e.pointerId);
+      } catch {
+        // Ignore synthetic events where pointer capture is unavailable
+      }
+    };
+
+    const endPour = (e) => {
+      if (e && this.pourPointerId !== null && e.pointerId !== undefined && e.pointerId !== this.pourPointerId) {
+        return;
+      }
+      if (e && e.cancelable) e.preventDefault();
+      if (this.pourPointerId !== null) {
+        try {
+          if (btnEl.hasPointerCapture?.(this.pourPointerId)) {
+            btnEl.releasePointerCapture(this.pourPointerId);
+          }
+        } catch {
+          // Ignore if already released
+        }
+      }
+      this.pourPointerId = null;
+      this.buttonPouring = false;
+      btnEl.classList.remove('is-pressing');
+    };
+
+    btnEl.addEventListener('pointerdown', startPour);
+    btnEl.addEventListener('pointerup', endPour);
+    btnEl.addEventListener('pointercancel', endPour);
+    btnEl.addEventListener('lostpointercapture', endPour);
+    btnEl.addEventListener('pointerleave', (e) => {
+      // Only stop on pointerleave if pointer capture is not holding the button
+      if (this.pourPointerId === e.pointerId && !btnEl.hasPointerCapture?.(e.pointerId)) {
+        endPour(e);
+      }
+    });
+    btnEl.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  resetPour() {
+    this.keyPouring = false;
+    this.buttonPouring = false;
+    this.pourPointerId = null;
+    if (this.pourBtnEl) {
+      this.pourBtnEl.classList.remove('is-pressing');
+    }
+  }
+
+  _bindEvents() {
+    // Prevent mobile long-press context callout over canvas
+    this.canvasHost.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Pointer movement over bowl (mouse hover OR active touch drag)
+    this.canvasHost.addEventListener('pointerdown', (e) => {
+      if (e.pointerId === this.pourPointerId) return;
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        this.isTouchDevice = true;
+      }
+      if (this.onUserGesture) this.onUserGesture();
+      if (this.spoonPointerId === null) {
+        this.spoonPointerId = e.pointerId;
+        this.touchStirringActive = false;
+      }
+      if (e.pointerId === this.spoonPointerId) {
+        this._updateSpoonFromEvent(e, true);
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerId === this.pourPointerId) return;
+      if (e.pointerType === 'mouse' || e.pointerId === this.spoonPointerId) {
+        this._updateSpoonFromEvent(e, false);
+      }
+    });
+
+    const releasePointer = (e) => {
+      if (e.pointerId === this.spoonPointerId) {
+        this.spoonPointerId = null;
+        this.touchStirringActive = false;
+        if (e.pointerType !== 'mouse') {
+          this.pointerInBowl = false;
+        }
+      }
+    };
+
+    window.addEventListener('pointerup', releasePointer);
+    window.addEventListener('pointercancel', releasePointer);
+
+    // Prevent touch scrolling / pull-to-refresh on canvas while stirring
+    this.canvasHost.addEventListener(
+      'touchmove',
+      (e) => {
+        if (e.cancelable) e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    // Spacebar to pour!
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !e.repeat) {
+        if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+          document.activeElement.blur();
+        }
+        e.preventDefault();
+        if (this.onUserGesture) this.onUserGesture();
+        this.keyPouring = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this.keyPouring = false;
+      }
+    });
+
+    const resetAllActive = () => {
+      this.resetPour();
+      this.spoonPointerId = null;
+      this.touchStirringActive = false;
+      this.pointerInBowl = false;
+    };
+
+    window.addEventListener('blur', resetAllActive);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) resetAllActive();
+    });
+  }
+
+  _updateSpoonFromEvent(e, isInitialDown = false) {
+    if (!this.renderer) return;
+    const mapped = this.renderer.screenToBowlCoords(e.clientX, e.clientY);
+    this.pointerX = mapped.x;
+    this.pointerY = mapped.y;
+
+    if (e.pointerType === 'mouse') {
+      this.pointerInBowl = mapped.inBowl;
+      return;
+    }
+
+    // Touch / pen ergonomics: once a finger starts stirring in/near the bowl,
+    // allow wider circular finger arcs around the rim without dropping swirl tracking.
+    const dist = Math.hypot(mapped.x, mapped.y);
+    if (mapped.inBowl || (isInitialDown && dist <= 1.28)) {
+      this.touchStirringActive = true;
+    }
+    this.pointerInBowl = this.touchStirringActive ? dist <= 1.85 : mapped.inBowl;
+  }
+}
+
+__exports.InputController = InputController;
+  },
+  'src/audio/soundEngine.js': function(__exports, __require) {
+/**
+ * Zero-dependency Web Audio procedural kitchen sound synthesizer.
+ * Synthesizes water pouring, kettle boil whistle, liquid swishing,
+ * and the signature heavy "whup-glop" of thick gelatinized pap!
+ */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+    this.initialized = false;
+
+    this.pourGain = null;
+    this.pourFilter = null;
+    this.stirGain = null;
+    this.stirFilter = null;
+    this.boilGain = null;
+
+    this._wasBoiled = false;
+    this._wasCaught = false;
+    this._swirlPhase = 0;
+  }
+
+  unlock() {
+    if (this.initialized) {
+      if (this.ctx && this.ctx.state !== 'running') {
+        this.ctx.resume().catch(() => {});
+      }
+      return;
+    }
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+
+    this.ctx = new AudioCtx();
+    this.initialized = true;
+
+    // Shared 2-second noise buffer
+    const bufferSize = this.ctx.sampleRate * 2;
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    let b0 = 0;
+    let b1 = 0;
+    let b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      // Soft pink-ish noise so nothing sounds harsh
+      b0 = 0.997 * b0 + white * 0.029;
+      b1 = 0.985 * b1 + white * 0.032;
+      b2 = 0.950 * b2 + white * 0.048;
+      data[i] = (b0 + b1 + b2 + white * 0.12) * 0.9;
+    }
+
+    // 1. Pouring stream channel
+    const pourSrc = this.ctx.createBufferSource();
+    pourSrc.buffer = noiseBuffer;
+    pourSrc.loop = true;
+    this.pourFilter = this.ctx.createBiquadFilter();
+    this.pourFilter.type = 'bandpass';
+    this.pourFilter.frequency.value = 900;
+    this.pourFilter.Q.value = 1.6;
+    this.pourGain = this.ctx.createGain();
+    this.pourGain.gain.value = 0;
+    pourSrc.connect(this.pourFilter).connect(this.pourGain).connect(this.ctx.destination);
+    pourSrc.start();
+
+    // 2. Spoon stirring / "whup-glop" channel
+    const stirSrc = this.ctx.createBufferSource();
+    stirSrc.buffer = noiseBuffer;
+    stirSrc.loop = true;
+    this.stirFilter = this.ctx.createBiquadFilter();
+    this.stirFilter.type = 'bandpass';
+    this.stirFilter.frequency.value = 650;
+    this.stirFilter.Q.value = 2.4;
+    this.stirGain = this.ctx.createGain();
+    this.stirGain.gain.value = 0;
+    stirSrc.connect(this.stirFilter).connect(this.stirGain).connect(this.ctx.destination);
+    stirSrc.start();
+
+    // 3. Subtle kettle / stove simmer channel
+    const boilSrc = this.ctx.createBufferSource();
+    boilSrc.buffer = noiseBuffer;
+    boilSrc.loop = true;
+    const boilFilter = this.ctx.createBiquadFilter();
+    boilFilter.type = 'lowpass';
+    boilFilter.frequency.value = 340;
+    this.boilGain = this.ctx.createGain();
+    this.boilGain.gain.value = 0;
+    boilSrc.connect(boilFilter).connect(this.boilGain).connect(this.ctx.destination);
+    boilSrc.start();
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.muted && this.initialized) {
+      this._silenceAll();
+    }
+    return this.muted;
+  }
+
+  silence() {
+    if (this.initialized) {
+      this._silenceAll();
+    }
+  }
+
+  _silenceAll() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    this.pourGain.gain.setTargetAtTime(0, now, 0.04);
+    this.stirGain.gain.setTargetAtTime(0, now, 0.04);
+    this.boilGain.gain.setTargetAtTime(0, now, 0.04);
+  }
+
+  resetRoundFlags() {
+    this._wasBoiled = false;
+    this._wasCaught = false;
+  }
+
+  update(snapshot, dt) {
+    if (!this.initialized || this.muted || !this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const activePhase = ['SLURRY', 'POUR_HOT', 'STOVE_RESCUE', 'TOPPINGS'].includes(snapshot.phase);
+    if (!activePhase) {
+      this._silenceAll();
+      return;
+    }
+
+    // 1. Kettle 100°C whistle cue (once per boil!)
+    if (snapshot.kettleTempC >= 99.6 && !this._wasBoiled) {
+      this._wasBoiled = true;
+      this.playKettleReadyChime();
+    } else if (snapshot.kettleTempC < 96) {
+      this._wasBoiled = false;
+    }
+
+    // 2. "The Catch" thickener swell cue (+ subtle mobile haptic pulse where supported)
+    if (snapshot.catchTriggered && !this._wasCaught) {
+      this._wasCaught = true;
+      this.playCatchBloop();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate([16, 28, 22]);
+        } catch {
+          // Ignore vibration restrictions
+        }
+      }
+    }
+
+    // 3. Pouring stream modulation
+    const pouring = snapshot.pourStreamProgress > 0.08 && snapshot.isPouring;
+    if (pouring) {
+      const isHot = snapshot.phase === 'POUR_HOT';
+      const isMilk = snapshot.phase === 'TOPPINGS';
+      const baseFreq = isHot ? 640 : isMilk ? 760 : 1020;
+      const wobble = Math.sin(snapshot.elapsed * 19) * 55;
+      this.pourFilter.frequency.setTargetAtTime(baseFreq + wobble, now, 0.04);
+      this.pourGain.gain.setTargetAtTime(isMilk ? 0.07 : 0.14, now, 0.04);
+    } else {
+      this.pourGain.gain.setTargetAtTime(0, now, 0.05);
+    }
+
+    // 4. Stirring sound: transitions from watery swish -> heavy thick custard "whup-glop"!
+    const speed = snapshot.linearStirSpeed;
+    if (snapshot.spoon.inBowl && speed > 0.16) {
+      this._swirlPhase += dt * Math.max(4, Math.abs(snapshot.angularVelocity) * 1.15);
+      const thickness = Math.min(1.4, snapshot.cookedThickness);
+      const isCooked = snapshot.gelatinization > 0.45;
+
+      // Rhythmic cadence pulse as spoon whips around bowl
+      const pulse = 0.62 + 0.38 * Math.sin(this._swirlPhase);
+      const freq = isCooked
+        ? Math.max(210, 490 - thickness * 210) + pulse * 85
+        : 820 + Math.min(350, speed * 90);
+      const q = isCooked ? 3.4 : 1.7;
+      const vol = Math.min(0.18, (0.03 + speed * 0.042) * pulse * (isCooked ? 1.25 : 0.75));
+
+      this.stirFilter.frequency.setTargetAtTime(freq, now, 0.03);
+      this.stirFilter.Q.setTargetAtTime(q, now, 0.05);
+      this.stirGain.gain.setTargetAtTime(vol, now, 0.03);
+    } else {
+      this.stirGain.gain.setTargetAtTime(0, now, 0.05);
+    }
+
+    // 5. Simmer / Stove hiss
+    const boilingOnStove = (snapshot.kettleBurnerOn && snapshot.kettleTempC > 94) || snapshot.phase === 'STOVE_RESCUE';
+    const simmerVol = snapshot.phase === 'STOVE_RESCUE'
+      ? 0.065 + snapshot.scorchRisk * 0.05
+      : boilingOnStove ? 0.04 : 0;
+    this.boilGain.gain.setTargetAtTime(simmerVol, now, 0.08);
+  }
+
+  playKettleReadyChime() {
+    if (!this.initialized || this.muted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(1174, now + 0.32);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.065, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.48);
+  }
+
+  playCatchBloop() {
+    if (!this.initialized || this.muted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(370, now + 0.22);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.09, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.28);
+  }
+
+  playPlop() {
+    if (!this.initialized || this.muted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.exponentialRampToValueAtTime(560, now + 0.09);
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }
+
+  playServeChime(highScore = true) {
+    if (!this.initialized || this.muted || !this.ctx) return;
+    const notes = highScore ? [523.25, 659.25, 783.99, 1046.5] : [392.0, 349.23, 329.63];
+    notes.forEach((freq, idx) => {
+      const now = this.ctx.currentTime + idx * 0.09;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.07, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+      osc.connect(gain).connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    });
+  }
+}
+
+__exports.SoundEngine = SoundEngine;
+  }
+  };
+  const __cache = {};
+  function __require(id) {
+    if (__cache[id]) return __cache[id];
+    const exportsObj = {};
+    __cache[id] = exportsObj;
+    __modules[id](exportsObj, __require);
+    return exportsObj;
+  }
+  __require('src/main.js');
+})();
+</script>
+</body>
+</html>
